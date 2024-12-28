@@ -1,6 +1,42 @@
 export LANG=ja_JP.UTF-8
 
-# alias
+# 補完機能有効化
+autoload -Uz compinit
+compinit
+
+## 小文字でも大文字でもマッチさせる
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+
+## 補完候補の一覧を表示したときに選択出来るようにする
+zstyle ':completion:*:default' menu select=1
+
+## sudo で補完機能有効化
+zstyle ':completion:*:sudo:*' command-path /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin /usr/X11R6/bin
+
+# 履歴保存
+HISTSIZE=100000
+SAVEHIST=1000000
+
+## .zsh_history に実行時刻を記録する
+setopt extended_history
+
+## historyを共有
+setopt share_history
+
+## ヒストリを呼び出してから実行する間に一旦編集可能
+setopt hist_verify
+
+## 余分な空白は詰めて記録
+setopt hist_reduce_blanks
+
+## historyコマンドは履歴に登録しない
+setopt hist_no_store
+
+## 補完時にヒストリを自動的に展開
+setopt hist_expand
+
+# エイリアス
 alias la='ls -al'
 alias ll='ls -l'
 
+alias history='history -t "%F %T"'
