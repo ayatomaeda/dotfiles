@@ -38,9 +38,31 @@ setopt hist_expand
 # LSCOLORS
 export LSCOLORS=cxfxcxdxbxegedabagacad
 
-# エイリアス
+# alias
+
+## ls
 alias ls='ls -GF'
 alias ll='ls -lGF'
 alias la='ls -alGF'
 
+## history
 alias history='history -t "%F %T"'
+
+# ssh コマンドのオーバーライド
+function ssh() {
+    local user_host=$1
+    local local_zshrc="$HOME/.zshrc"
+
+    # .zshrc をリモートに送信
+    if [[ -f $local_zshrc ]]; then
+        echo "Uploading .zshrc to $user_host..."
+        scp $local_zshrc "$user_host:~" || {
+            echo "Failed to upload .zshrc. Continuing with SSH."
+        }
+    else
+        echo "No .zshrc file found at $local_zshrc. Continuing with SSH."
+    fi
+
+    # 元の ssh コマンドを実行
+    command ssh "$@"
+}
