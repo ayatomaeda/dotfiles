@@ -35,8 +35,12 @@ setopt hist_no_store
 ## 補完時にヒストリを自動的に展開
 setopt hist_expand
 
+# LSCOLORS
+export LSCOLORS=cxfxcxdxbxegedabagacad
+
 # エイリアス
-alias la='ls -al'
-alias ll='ls -l'
+alias ls='ls -GF'
+alias ll='ls -lGF'
+alias la='ls -alGF'
 
 alias history='history -t "%F %T"'
