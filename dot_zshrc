@@ -18,7 +18,8 @@ zstyle ':completion:*:default' menu select=1
 zstyle ':completion:*:sudo:*' command-path /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin /usr/X11R6/bin
 
 # 履歴保存
-HISTSIZE=100000
+HISTFILE=~/.zsh_history
+HISTSIZE=1000000
 SAVEHIST=1000000
 
 ## .zsh_history に実行時刻を記録する
