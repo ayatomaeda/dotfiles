@@ -38,5 +38,5 @@ $ git push origin ~
 $ brew install chezmoi
 $ chezmoi init ~.git
 
-$chezmoi apply
+$ chezmoi apply
 ```
