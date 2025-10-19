@@ -1,5 +1,6 @@
 brew "chezmoi"
 brew "ffmpeg"
+brew "gh"
 brew "git"
 brew "mas"
 brew "tmux"
