@@ -12,3 +12,6 @@
 	gpgsign = true
 [init]
         defaultBranch = main
+
+[ghq]
+	root = ~/git
