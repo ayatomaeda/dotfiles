@@ -9,8 +9,6 @@ brew "tmux"
 brew "uv"
 brew "yt-dlp"
 cask "1password"
-cask "adobe-creative-cloud"
-cask "amazon-photos"
 cask "brave-browser"
 cask "claude"
 cask "claude-code"
@@ -19,15 +17,11 @@ cask "docker-desktop"
 cask "firefox"
 cask "font-source-han-code-jp"
 cask "google-chrome"
-cask "logitech-options"
 cask "obsidian"
 cask "pycharm"
 cask "tailscale-app"
 cask "visual-studio-code"
 cask "vlc"
 cask "webstorm"
-mas "Keynote", id: 409183694
 mas "Kindle", id: 302584613
-mas "Numbers", id: 409203825
-mas "Pages", id: 409201541
 mas "Spark", id: 1176895641
