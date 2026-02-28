@@ -1,0 +1,17 @@
+theme = TokyoNight
+
+font-family = SauceCodePro Nerd Font Mono
+font-size = 16
+
+adjust-cell-height = 10%
+
+background-opacity = 0.8
+background-blur-radius = 20
+
+window-padding-x = 4
+window-padding-y = 4
+window-padding-balance = true
+window-save-state = always
+
+mouse-hide-while-typing = true
+
