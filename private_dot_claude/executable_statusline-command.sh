@@ -63,6 +63,7 @@ CTX_BAR=$(progress_bar "$CTX_PCT")
 LINES_ADDED=$(echo "$INPUT" | jq -r '.cost.total_lines_added // 0')
 LINES_REMOVED=$(echo "$INPUT" | jq -r '.cost.total_lines_removed // 0')
 
+GIT_ICON=$'\ue0a0'
 GIT_PART=""
 FILES_PART=""
 if git rev-parse --git-dir &>/dev/null; then
@@ -71,11 +72,11 @@ if git rev-parse --git-dir &>/dev/null; then
     BRANCH="${BRANCH:0:20}…"
   fi
   FILE_COUNT=$({ git diff --name-only 2>/dev/null; git diff --cached --name-only 2>/dev/null; } | sort -u | grep -c . || true)
-  GIT_PART="${SEP} ${BRANCH}"
+  GIT_PART="${SEP}${GIT_ICON} ${BRANCH}"
   FILES_PART="${SEP}󰈮 ${FILE_COUNT}"
 fi
 
-printf '%b\n' "󰚩 ${MODEL}${SEP}󰧑 ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}${SEP}${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}${GIT_PART}${FILES_PART}"
+printf '%b\n' "󰚩 ${MODEL}${SEP}󰧑 ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}${GIT_PART}${SEP}${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}${FILES_PART}"
 
 # === Lines 2-3: Rate Limits ===
 
