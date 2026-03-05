@@ -75,3 +75,4 @@ function ssh() {
     # 元の ssh コマンドを実行
     command ssh "$@"
 }
+export PATH="$HOME/.local/bin:$PATH"
