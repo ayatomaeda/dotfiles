@@ -129,7 +129,7 @@ if [ -n "$USAGE" ]; then
     FIVE_COLOR=$(color_for_pct "$FIVE_PCT")
     FIVE_BAR=$(progress_bar "$FIVE_PCT")
     FIVE_RESET_STR=""
-    [ -n "$FIVE_RESET" ] && FIVE_RESET_STR=$(convert_to_tokyo "$FIVE_RESET" "+%H:%M")
+    [ -n "$FIVE_RESET" ] && FIVE_RESET_STR=$(convert_to_tokyo "$FIVE_RESET" "+%-H:%M")
     printf '%b\n' "󰥔 ${FIVE_COLOR}${FIVE_BAR} ${FIVE_PCT}%${RESET}  ${DIM}resets at ${FIVE_RESET_STR}${RESET}"
   fi
 
@@ -141,7 +141,7 @@ if [ -n "$USAGE" ]; then
     SEVEN_COLOR=$(color_for_pct "$SEVEN_PCT")
     SEVEN_BAR=$(progress_bar "$SEVEN_PCT")
     SEVEN_RESET_STR=""
-    [ -n "$SEVEN_RESET" ] && SEVEN_RESET_STR=$(convert_to_tokyo "$SEVEN_RESET" "+%m/%d %H:%M")
+    [ -n "$SEVEN_RESET" ] && SEVEN_RESET_STR=$(convert_to_tokyo "$SEVEN_RESET" "+%-m/%-d %-H:%M")
     printf '%b\n' "󰃭 ${SEVEN_COLOR}${SEVEN_BAR} ${SEVEN_PCT}%${RESET}  ${DIM}resets at ${SEVEN_RESET_STR}${RESET}"
   fi
 fi
