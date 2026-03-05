@@ -75,7 +75,8 @@ if git rev-parse --git-dir &>/dev/null; then
   FILES_PART="${SEP}󰈮 ${FILE_COUNT}"
 fi
 
-printf '%b\n' "󰚩 ${MODEL}${SEP}󰧑 ${CTX_COLOR}${CTX_BAR} ${CTX_PCT}%${RESET}${GIT_PART}${SEP}${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}${FILES_PART}"
+CTX_PCT_FMT=$(printf "%3d" "$CTX_PCT")
+printf '%b\n' "󰚩 ${MODEL}${SEP}󰧑 ${CTX_COLOR}${CTX_BAR} ${CTX_PCT_FMT}%${RESET}${GIT_PART}${SEP}${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}${FILES_PART}"
 
 # === Lines 2-3: Rate Limits ===
 
@@ -130,7 +131,8 @@ if [ -n "$USAGE" ]; then
     FIVE_BAR=$(progress_bar "$FIVE_PCT")
     FIVE_RESET_STR=""
     [ -n "$FIVE_RESET" ] && FIVE_RESET_STR=$(convert_to_tokyo "$FIVE_RESET" "+%-H:%M")
-    printf '%b\n' "󰥔 ${FIVE_COLOR}${FIVE_BAR} ${FIVE_PCT}%${RESET}  ${DIM}resets at ${FIVE_RESET_STR}${RESET}"
+    FIVE_PCT_FMT=$(printf "%3d" "$FIVE_PCT")
+    printf '%b\n' "󰥔 ${FIVE_COLOR}${FIVE_BAR} ${FIVE_PCT_FMT}%${RESET}  ${DIM}resets at ${FIVE_RESET_STR}${RESET}"
   fi
 
   SEVEN_UTL=$(echo "$USAGE" | jq -r '.seven_day.utilization // empty')
@@ -142,6 +144,7 @@ if [ -n "$USAGE" ]; then
     SEVEN_BAR=$(progress_bar "$SEVEN_PCT")
     SEVEN_RESET_STR=""
     [ -n "$SEVEN_RESET" ] && SEVEN_RESET_STR=$(convert_to_tokyo "$SEVEN_RESET" "+%-m/%-d %-H:%M")
-    printf '%b\n' "󰃭 ${SEVEN_COLOR}${SEVEN_BAR} ${SEVEN_PCT}%${RESET}  ${DIM}resets at ${SEVEN_RESET_STR}${RESET}"
+    SEVEN_PCT_FMT=$(printf "%3d" "$SEVEN_PCT")
+    printf '%b\n' "󰃭 ${SEVEN_COLOR}${SEVEN_BAR} ${SEVEN_PCT_FMT}%${RESET}  ${DIM}resets at ${SEVEN_RESET_STR}${RESET}"
   fi
 fi
