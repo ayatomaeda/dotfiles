@@ -29,12 +29,14 @@
 
 ## 3. GUI/mas: cask・Mac App Store を homebrew モジュールへ移行
 
-- [ ] 3.1 `homebrew.enable = true;` を設定し、`homebrew.casks` に全 cask を列挙する
-- [ ] 3.2 `homebrew.masApps` に全 Mac App Store アプリを名前と ID で列挙する（Keynote/Numbers/Pages/Xcode/Kindle/Spark）
-- [ ] 3.3 `mas` CLI を `homebrew.brews` に残す
-- [ ] 3.4 `homebrew.onActivation.cleanup = "check"`（非破壊）で `switch` し、未列挙アプリが無いことを確認する
-- [ ] 3.5 全項目の列挙漏れが無いことを確認後、必要なら `cleanup` を `"uninstall"`/`"zap"` へ厳格化する
-- [ ] 3.6 GUI/mas 移行分をコミットする
+- [x] 3.1 `homebrew.enable = true;` + `homebrew.casks` に cask を列挙（`claude-code` は除外＝自動更新される native インストーラで管理）
+- [x] 3.2 `homebrew.masApps` に全 mas アプリを列挙（Keynote/Numbers/Pages/Xcode/Kindle/Spark）
+- [x] 3.3 `mas` CLI を `homebrew.brews` に残す（＋ chezmoi / periphery / appium）
+- [x] 3.4 `onActivation.cleanup = "none"`（"check" より安全な非破壊）で `switch`。`brew bundle complete!` 全 30 項目 "Using" を確認
+- [x] 3.4a `appium` を npm グローバル → brew formula へ移行（npm 版削除 → `brew link --overwrite appium`）
+- [x] 3.4b Homebrew 本体を 5.1.4 → 6.0.6 へ更新（1password-cli cask の新 DSL に旧 brew が非対応だったため。`brew update`）
+- [ ] 3.5 `cleanup` を `"uninstall"` へ厳格化（★別ステップ）。事前に: (a) 宣言外の brew cask `amazon-photos` / `cmux` / `logitech-options` を config 追加 or 除外決定、(b) nix へ移行した 9 formula の brew 重複・appium の孤立依存(gcc 等)が削除対象になる点を確認・提示してから実施
+- [x] 3.6 GUI/mas 移行分をコミットする
 
 ## 4. dotfiles: home-manager へ移行
 
