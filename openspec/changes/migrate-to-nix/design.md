@@ -75,7 +75,7 @@ Web / context7 で 2026 年時点のベストプラクティスを検証済み (
 
 ## Resolved Decisions（旧 Open Questions）
 
-- **nixpkgs チャンネル = `nixpkgs-unstable`（確定）**。再現性は `flake.lock` のピン留めで担保されるためチャンネル差は「更新頻度と鮮度」のみ。darwin はパッケージ網羅性・バイナリキャッシュの鮮度が unstable の方が良く、`yt-dlp`/`uv`/`node`/`gh` など鮮度が効くツールを含むため unstable を採用。将来更新の破壊が煩わしくなれば stable (`nixos-25.11`) ベースへ、または「stable ベース＋一部 unstable 混在」へ後から移行可能。
+- **nixpkgs チャンネル = `nixpkgs-unstable`（確定）**。再現性は `flake.lock` のピン留めで担保されるためチャンネル差は「更新頻度と鮮度」のみで、`nix flake update` を実行するまでバージョンは動かず、更新が気に入らなければ `flake.lock` を git で戻すだけでロールバックできる（構造上「勝手に壊れる」ことはない）。darwin はパッケージ網羅性・バイナリキャッシュの鮮度が unstable の方が良く、`yt-dlp`（YouTube 仕様変更で頻繁に破損＝鮮度が命）/`uv`/`node`/`gh` など鮮度が効くツールを含むため unstable を採用。将来「更新時の変化を最小化したい」なら現行 stable の `nixos-26.05` ベースへ、または「stable ベース＋ overlay で一部のみ unstable 混在」へ後から移行可能。
 - **`appium` / `periphery` = Homebrew に残す（確定）**。`nix search nixpkgs` で確認した結果、両者とも nixpkgs に無い（`periphery` は無関係な `python-periphery`/`c-periphery` のみ、`appium` はサーバ本体ではなく `appium-inspector`/`appium-python-client` のみ）。したがって `homebrew.brews` に列挙する。
 - **対象アーキテクチャ = `aarch64-darwin`（Apple Silicon）**。x86_64-darwin の非推奨 (Nixpkgs 26.05 で最後) の影響を受けない。
 
