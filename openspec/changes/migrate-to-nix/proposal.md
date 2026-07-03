@@ -24,7 +24,8 @@
 ## Impact
 
 - **追加ファイル**: `flake.nix`, `flake.lock`, `darwin.nix`, `home.nix`（`openspec/specs/` ではなく dotfiles リポジトリ直下）。
-- **撤去ファイル (移行完了後)**: `dot_Brewfile`, `dot_zshrc`, `private_dot_gitconfig`, `private_dot_ssh/`, `private_dot_claude/`, `dot_config/`, `.chezmoiignore`。
-- **依存/ツール**: Determinate Nix (installer)、nix-darwin、home-manager、nixpkgs。Homebrew は cask / mas 用に残存（`mas` CLI 含む）。chezmoi は撤去。
+- **削除するファイル (移行完了後)**: `dot_Brewfile`（→ Nix / `homebrew.*`）, `dot_zshrc`（→ `programs.zsh`）, `private_dot_gitconfig`（→ `programs.git`）, `.chezmoiignore`。native モジュール化するファイルは Nix で内容を表現するため実体を残さない。
+- **リネームして残すファイル**: out-of-store symlink 先となる生ファイルはリポジトリに実体を残し、chezmoi プレフィックス (`dot_` / `private_` / `executable_`) を外した非 chezmoi パスへリネームする。`dot_config/ghostty/config` → `config/ghostty/config`、`private_dot_ssh/{config,config.d/}` → `ssh/{config,config.d/}`、`private_dot_claude/executable_statusline-command.sh` → `claude/statusline-command.sh`（実体に `+x` を付与）。
+- **依存/ツール**: Determinate Nix (installer)、nix-darwin、home-manager、nixpkgs。Homebrew は cask / mas 用に残存（`mas` CLI 含む）。chezmoi は撤去（Brewfile の `chezmoi` formula は Phase 4 の一致確認まで残し、Phase 5 で削除する）。
 - **ドキュメント**: `README.md` の新 PC セットアップ手順を chezmoi 版から Nix 版へ更新。
 - **非対象 (non-goals)**: nix-homebrew による Homebrew 本体の宣言化、NixOS/Linux 対応、`nix develop` によるプロジェクト別開発シェル、既存 CLI 全ツールの `programs.*` 完全モジュール化。

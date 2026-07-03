@@ -2,7 +2,7 @@
 
 現状は macOS 環境を 2 系統で管理している:
 
-- **パッケージ**: `dot_Brewfile` (Homebrew) — formula (CLI) 14 個 + cask (GUI) 20 個弱 + mas (App Store) 6 個。
+- **パッケージ**: `dot_Brewfile` (Homebrew) — formula (CLI) 13 個 + cask (GUI) 21 個 + mas (App Store) 6 個。
 - **dotfiles**: chezmoi (`dot_zshrc`, `private_dot_gitconfig`, `private_dot_ssh/`, `private_dot_claude/`, `dot_config/ghostty/config`)。
 
 バージョンがロックされず再現性が無い。所有者は Nix 未経験のため、学習しながら段階的に移行したい。
@@ -49,6 +49,7 @@ Web / context7 で 2026 年時点のベストプラクティスを検証済み (
 ### Decision 5: dotfiles は native モジュールと out-of-store symlink を使い分ける
 - **native モジュール** (`programs.zsh` / `programs.git` / `programs.tmux`): 設定を Nix で表現し、Nix の書き味を学べる。zsh の alias / history / ssh 関数は `programs.zsh.initExtra` 等へ、git の 1Password 署名 (`op-ssh-sign`) 設定はそのまま移植する。
 - **out-of-store symlink** (`config.lib.file.mkOutOfStoreSymlink`): ghostty の `config`、ssh の `config`/`config.d/`、claude の statusline スクリプトなど、アプリ固有形式または頻繁に編集する生ファイルはリポジトリ実体へ直接シンボリックリンクする。これにより編集後の rebuild 不要で即反映できる。
+- **リポジトリ実体の扱い**: out-of-store symlink は「リポジトリ内に実体が残るファイル」を指す。chezmoi 撤去後もこれらは削除せず、chezmoi プレフィックス (`dot_` / `private_` / `executable_`) を外した非 chezmoi パス（例: `config/ghostty/config`, `ssh/config`, `claude/statusline-command.sh`）へリネームして残す。`executable_` プレフィックスが無くなる分、実行可能スクリプトはリポジトリ側の実体に `+x`（`chmod +x`）を付与しておく必要がある（symlink はリンク先のパーミッションをそのまま反映するため）。
 - **理由**: `home.file` の既定は Nix store への読み取り専用コピーで、編集のたびに rebuild が要る。頻繁編集ファイルには out-of-store symlink が定石。
 
 ### Decision 6: リポジトリ構成は最小 2 ファイルから始める

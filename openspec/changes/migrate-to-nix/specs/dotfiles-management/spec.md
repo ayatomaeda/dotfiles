@@ -34,8 +34,9 @@
 
 #### Scenario: 実行可能スクリプトの配置
 
-- **WHEN** claude の statusline スクリプトを配置する
-- **THEN** 実行可能属性を保ったままリンクされ、そのまま実行できる
+- **WHEN** claude の statusline スクリプトを out-of-store symlink で配置する
+- **THEN** リポジトリ側の実体に実行可能属性 (`+x`) が付与されており、symlink 経由でそのまま実行できる
+- **AND** chezmoi の `executable_` プレフィックスに依存しない
 
 ### Requirement: 秘密情報を Nix store に置かない
 
@@ -53,4 +54,10 @@
 #### Scenario: 移行差分の検証
 
 - **WHEN** ある dotfile を home-manager 化して `switch` する
-- **THEN** 適用結果が従来の chezmoi 適用結果と一致することを確認できてから、対応する `dot_*` / `private_dot_*` ファイルを削除する
+- **THEN** 適用結果が従来の chezmoi 適用結果と一致することを確認できてから、chezmoi 側の情報源を撤去する
+
+#### Scenario: 撤去の種別（削除 vs リネーム）
+
+- **WHEN** chezmoi 情報源を撤去する
+- **THEN** native モジュール化したファイル (`dot_zshrc`, `private_dot_gitconfig`) は実体を削除する
+- **AND** out-of-store symlink 先のファイル (ghostty/ssh/claude) は削除せず、chezmoi プレフィックスを外した非 chezmoi パスへリネームして残す
