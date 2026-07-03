@@ -1,3 +1,6 @@
 # nix-darwin / home-manager build artifacts
 result
 result-*
+
+# Claude Code / OpenSpec のローカルプラグイン定義は versioning しない
+.claude/
