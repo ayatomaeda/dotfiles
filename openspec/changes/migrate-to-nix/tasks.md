@@ -6,13 +6,15 @@
 
 ## 1. 土台: Nix インストールと最小構成で switch を通す
 
-- [ ] 1.1 Determinate Systems 製インストーラで Nix を導入する (`curl -fsSL https://install.determinate.systems/nix | sh -s -- install`)
-- [ ] 1.2 実ホスト名を確認する (`scutil --get LocalHostName`) — `flake.nix` の `darwinConfigurations` キーに使う
-- [ ] 1.3 `flake.nix` を作成し、inputs に `nixpkgs`(→`nixpkgs-unstable`) / `nix-darwin` / `home-manager` を宣言、outputs に `darwinConfigurations.<host>`（system: `aarch64-darwin`）を定義する
-- [ ] 1.4 `darwin.nix` に最小のシステム構成を書き、`nix.enable = false;`（Determinate 競合回避）を設定する
-- [ ] 1.5 `home.nix` に最小の home-manager 構成を書き、nix-darwin のモジュールとして組み込む
-- [ ] 1.6 `darwin-rebuild switch --flake .#<host>` が成功することを確認する（最初の成功体験）
-- [ ] 1.7 この時点の `flake.nix` / `flake.lock` / `darwin.nix` / `home.nix` をコミットする
+> 注: 調査の結果、Determinate Nix 3.17.2 / flakes / nix-darwin は**既に導入済み**だった（過去に試して放置した最小構成。ユーザー承諾のうえ本 flake で置き換える）。よって 1.1 は導入不要。
+
+- [x] 1.1 Nix 導入 — Determinate Nix 3.17.2 が導入済み（flakes 有効・nix-darwin 稼働中）を確認。新規インストール不要
+- [x] 1.2 実ホスト名を確認する (`scutil --get LocalHostName`) → `KeisukenoMac-Studio`
+- [x] 1.3 `flake.nix` を作成し、inputs に `nixpkgs`(→`nixpkgs-unstable`) / `nix-darwin` / `home-manager` を宣言、outputs に `darwinConfigurations.KeisukenoMac-Studio`（`nixpkgs.hostPlatform = "aarch64-darwin"`）を定義
+- [x] 1.4 `darwin.nix` に最小のシステム構成を書き、`nix.enable = false;`（Determinate 競合回避）/ `system.primaryUser` / `stateVersion = 6` を設定
+- [x] 1.5 `home.nix` に最小の home-manager 構成を書き、nix-darwin のモジュールとして組み込み。`darwin-rebuild build` で評価・ビルド成功を確認（非破壊）
+- [x] 1.6 `sudo darwin-rebuild switch --flake .#KeisukenoMac-Studio` 成功を確認（activation・home-manager activation 完走、Determinate 競合なし）
+- [x] 1.7 この時点の `flake.nix` / `flake.lock` / `darwin.nix` / `home.nix` / `.gitignore` をコミットする
 
 ## 2. CLI: formula を Nix ネイティブへ移行
 
