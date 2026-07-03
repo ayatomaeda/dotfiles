@@ -15,9 +15,11 @@
 - [x] 1.5 `home.nix` に最小の home-manager 構成を書き、nix-darwin のモジュールとして組み込み。`darwin-rebuild build` で評価・ビルド成功を確認（非破壊）
 - [x] 1.6 `sudo darwin-rebuild switch --flake .#KeisukenoMac-Studio` 成功を確認（activation・home-manager activation 完走、Determinate 競合なし）
 - [x] 1.7 この時点の `flake.nix` / `flake.lock` / `darwin.nix` / `home.nix` / `.gitignore` をコミットする
+- [x] 1.8 (インシデント対応) 旧 standalone HM が管理していた dotfiles が switch で削除された件を復旧: chezmoi ソースから再適用し、`.chezmoiignore` に flake/openspec を追加して `$HOME` 誤展開を防止（design Risks 参照）
 
 ## 2. CLI: formula を Nix ネイティブへ移行
 
+- [ ] 2.0 (暫定) brew が新シェル PATH から外れているため、必要なら現シェルで `eval "$(/opt/homebrew/bin/brew shellenv)"`。CLI を nix 化するにつれ解消する
 - [ ] 2.1 `nix search` で各 CLI の nixpkgs 提供を確認する（`git` `tmux` `node` `ffmpeg` `gh` `ghq` `uv` `yt-dlp` `swiftlint`）
 - [ ] 2.2 nixpkgs にあるものを `home.packages`（または git/tmux は後続の native モジュール）で宣言する
 - [ ] 2.3 `appium` / `periphery` を `homebrew.brews` に列挙する（nixpkgs 未提供を確認済み: task 0.3）
@@ -36,6 +38,7 @@
 
 ## 4. dotfiles: home-manager へ移行
 
+- [ ] 4.0 既存の素ファイル (`~/.zshrc` 等) と HM の symlink 生成の衝突を避けるため `home-manager.backupFileExtension = "hm-bak";` を設定する（または対象ファイルを事前削除）。`programs.zsh` では brew shellenv も明示して PATH を恒久化する
 - [ ] 4.1 `programs.zsh` を作成し、alias・history オプション・カスタム ssh 関数・`PATH` を移植する
 - [ ] 4.2 `programs.git` を作成し、user/署名(`op-ssh-sign`)/ghq root/`init.defaultBranch` を移植する
 - [ ] 4.3 `programs.tmux` を作成する
@@ -52,6 +55,7 @@
 - [ ] 5.3 リネームした実行可能スクリプトに `chmod +x` を付与し、`home.nix` の symlink 先パスを新パスへ更新して `switch` で疎通確認する
 - [ ] 5.4 native モジュール化済みの実体ファイルを削除する（`dot_zshrc` / `private_dot_gitconfig`）
 - [ ] 5.5 `dot_Brewfile` / `.chezmoiignore` を削除し、Brewfile の `chezmoi` formula 撤去に伴い chezmoi をアンインストールする
+- [ ] 5.5a 旧 standalone home-manager の残骸プロファイルを掃除する（`~/.local/state/nix/profiles/home-manager*` の旧世代。`nix profile` / world 削除で不要世代を除去し、GC）
 - [ ] 5.6 `README.md` の新 PC セットアップ手順を Nix 版（Determinate インストール → `darwin-rebuild switch --flake .#<host>`）へ更新する
 - [ ] 5.7 クリーン再現の手順（`--rollback` によるロールバック含む）を README に追記する
 - [ ] 5.8 撤去とドキュメント更新分をコミットする
