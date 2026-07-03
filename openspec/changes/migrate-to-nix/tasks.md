@@ -19,13 +19,13 @@
 
 ## 2. CLI: formula を Nix ネイティブへ移行
 
-- [ ] 2.0 (暫定) brew が新シェル PATH から外れているため、必要なら現シェルで `eval "$(/opt/homebrew/bin/brew shellenv)"`。CLI を nix 化するにつれ解消する
-- [ ] 2.1 `nix search` で各 CLI の nixpkgs 提供を確認する（`git` `tmux` `node` `ffmpeg` `gh` `ghq` `uv` `yt-dlp` `swiftlint`）
-- [ ] 2.2 nixpkgs にあるものを `home.packages`（または git/tmux は後続の native モジュール）で宣言する
-- [ ] 2.3 `appium` / `periphery` を `homebrew.brews` に列挙する（nixpkgs 未提供を確認済み: task 0.3）
+- [x] 2.0 (暫定) brew が新シェル PATH から外れていた件 → CLI の nix 化で解消（node 含む主要ツールは nix プロファイル経由で PATH に復帰）
+- [x] 2.1 各 CLI の nixpkgs 提供を `nix eval` で確認（git 2.54 / tmux 3.6a / nodejs 24.15 / ffmpeg 8.1 / gh 2.94 / ghq 1.10 / uv 0.11 / yt-dlp 2026.06 / swiftlint 0.63、すべて aarch64-darwin で解決）
+- [x] 2.2 上記 9 ツールを `home.packages` で宣言（git/tmux は Phase 4 で `programs.*` へ移す予定）
+- [ ] 2.3 `appium` / `periphery` を `homebrew.brews` に列挙する（Phase 3 で homebrew モジュール有効化と同時に実施）
 - [ ] 2.3a `chezmoi` formula はこの Phase では Nix へ移さず既存 brew のまま残す（Phase 4 の一致確認に使うため。撤去は Phase 5）
-- [ ] 2.4 `switch` して各 CLI が Nix 経由で PATH 上に来ることを確認し、対応する formula を `dot_Brewfile` から削除する
-- [ ] 2.5 CLI 移行分をコミットする
+- [x] 2.4 `switch` して各 CLI が `/etc/profiles/per-user/keisuke/bin/` に解決されることを確認。※brew 側の重複 formula のアンインストールは Phase 3 の homebrew 突合/Phase 5 撤去でまとめて実施（今は共存・無害）
+- [x] 2.5 CLI 移行分をコミットする
 
 ## 3. GUI/mas: cask・Mac App Store を homebrew モジュールへ移行
 
