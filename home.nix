@@ -79,7 +79,9 @@ in
       # Homebrew (cask/mas 用 formula の CLI を PATH に載せる)
       eval "$(/opt/homebrew/bin/brew shellenv)"
 
-      export PATH="$HOME/.local/bin:$PATH"
+      # ~/.local/bin と Nix プロファイルを Homebrew より優先させる。
+      # (appium の依存で入る brew node より nix の node を優先させるため)
+      export PATH="$HOME/.local/bin:/etc/profiles/per-user/$USER/bin:$PATH"
     '';
   };
 
@@ -104,13 +106,13 @@ in
   # アプリ固有形式 / 頻繁編集の生ファイルは out-of-store symlink (design Decision 5)。
   # リポジトリ実体へ直接リンクするため、編集後 rebuild なしで反映される。
   home.file.".config/ghostty/config".source =
-    config.lib.file.mkOutOfStoreSymlink "${repoDir}/dot_config/ghostty/config";
+    config.lib.file.mkOutOfStoreSymlink "${repoDir}/config/ghostty/config";
   home.file.".ssh/config".source =
-    config.lib.file.mkOutOfStoreSymlink "${repoDir}/private_dot_ssh/config";
+    config.lib.file.mkOutOfStoreSymlink "${repoDir}/ssh/config";
   home.file.".ssh/config.d".source =
-    config.lib.file.mkOutOfStoreSymlink "${repoDir}/private_dot_ssh/config.d";
+    config.lib.file.mkOutOfStoreSymlink "${repoDir}/ssh/config.d";
   home.file.".claude/statusline-command.sh".source =
-    config.lib.file.mkOutOfStoreSymlink "${repoDir}/private_dot_claude/executable_statusline-command.sh";
+    config.lib.file.mkOutOfStoreSymlink "${repoDir}/claude/statusline-command.sh";
 
   # home-manager 自身を home-manager で管理する。
   programs.home-manager.enable = true;

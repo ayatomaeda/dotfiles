@@ -22,22 +22,25 @@
   homebrew = {
     enable = true;
 
+    # cmux cask の配布元 tap。宣言しておかないと cleanup が untap を試みて
+    # 「cmux が入っているので untap 拒否」エラーが毎回出るため明示する。
+    taps = [ "manaflow-ai/cmux" ];
+
     onActivation = {
       autoUpdate = false; # switch のたびに brew update しない (高速・予測可能)
       upgrade = false; # 既存パッケージを勝手に upgrade しない
-      # Phase 3 は非破壊 ("none": 未列挙パッケージを一切削除しない)。
-      # nix へ移行した 9 formula の brew 重複掃除は、内容確認のうえ後で
-      # "uninstall" へ厳格化する (design Risks / tasks 3.5)。
-      cleanup = "none";
+      # Phase 5: "uninstall" に厳格化。宣言外の brew formula/cask を除去する
+      # (nix へ移行した重複 formula、appium の孤立依存、未使用 cask など)。
+      # 削除対象は switch 前に `brew bundle cleanup` の dry-run で提示・承認済み。
+      cleanup = "uninstall";
     };
 
     # nixpkgs 未提供 or brew 必須の formula のみ残す。
     #   mas      : masApps 導入に必要
-    #   chezmoi  : Phase 4 の一致確認に使用 (撤去は Phase 5)
     #   appium/periphery : nixpkgs 未提供 (task 0.3 で確認済み)
+    # chezmoi は Phase 5 で撤去 (dotfiles は home-manager 管理へ完全移行)。
     brews = [
       "mas"
-      "chezmoi"
       "appium"
       "periphery"
     ];
@@ -50,6 +53,7 @@
       "claude"
       # "claude-code" は declarative 管理から除外。Homebrew 管理下だと自動アップデートが
       # 無効化されるため、自動更新される native インストーラ版で管理する。
+      "cmux"
       "discord"
       "docker-desktop"
       "firefox"

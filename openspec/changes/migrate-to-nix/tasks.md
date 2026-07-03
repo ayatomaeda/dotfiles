@@ -48,16 +48,17 @@
 - [x] 4.5 ssh の `config` / `config.d/` を out-of-store symlink 化（秘密鍵は対象外・無事）
 - [x] 4.6 claude statusline スクリプトを symlink 配置（実行可能属性は実体側で保持）
 - [x] 4.7 switch 後に検証: 5 ファイルの symlink 実体到達 / .zshrc 主要要素の移植 / git identity・署名の実効値をすべて確認
-- [ ] 4.8 dotfiles 移行分をコミットする
+- [x] 4.8 dotfiles 移行分をコミットする（＋事後: node PATH を nix 優先へ修正）
 
 ## 5. 撤去: chezmoi と Brewfile を削除しドキュメント更新
 
-- [ ] 5.1 全 dotfile の一致確認が済んだことを最終確認する
-- [ ] 5.2 out-of-store symlink 先の生ファイルを chezmoi プレフィックスを外した非 chezmoi パスへリネームする（`dot_config/ghostty/config` → `config/ghostty/config`、`private_dot_ssh/{config,config.d/}` → `ssh/{config,config.d/}`、`private_dot_claude/executable_statusline-command.sh` → `claude/statusline-command.sh`）
-- [ ] 5.3 リネームした実行可能スクリプトに `chmod +x` を付与し、`home.nix` の symlink 先パスを新パスへ更新して `switch` で疎通確認する
-- [ ] 5.4 native モジュール化済みの実体ファイルを削除する（`dot_zshrc` / `private_dot_gitconfig`）
-- [ ] 5.5 `dot_Brewfile` / `.chezmoiignore` を削除し、Brewfile の `chezmoi` formula 撤去に伴い chezmoi をアンインストールする
-- [ ] 5.5a 旧 standalone home-manager の残骸プロファイルを掃除する（`~/.local/state/nix/profiles/home-manager*` の旧世代。`nix profile` / world 削除で不要世代を除去し、GC）
-- [ ] 5.6 `README.md` の新 PC セットアップ手順を Nix 版（Determinate インストール → `darwin-rebuild switch --flake .#<host>`）へ更新する
-- [ ] 5.7 クリーン再現の手順（`--rollback` によるロールバック含む）を README に追記する
-- [ ] 5.8 撤去とドキュメント更新分をコミットする
+- [x] 5.1 全 dotfile が HM 管理へ移行済み（symlink 実体到達・git 署名・zsh 移植を検証）
+- [x] 5.2 out-of-store symlink 先を非 chezmoi パスへリネーム（`config/ghostty/config`、`ssh/{config,config.d/}`、`claude/statusline-command.sh`）＋ home.nix 追従
+- [x] 5.3 `claude/statusline-command.sh` に `chmod +x`、home.nix の symlink 先を新パスへ更新し switch で疎通確認
+- [x] 5.4 native 化した実体ファイルを削除（`dot_zshrc` / `private_dot_gitconfig`）＋ 旧 `~/.gitconfig` も除去済み
+- [x] 5.5 `dot_Brewfile` / `.chezmoiignore` を削除、`chezmoi` formula 撤去＋アンインストール完了
+- [x] 5.5b (cleanup 厳格化) `cleanup="uninstall"` へ。dry-run で削除リストを提示し承認取得後、制御しながら削除: 宣言外 cask `amazon-photos`/`logitech-options`、実在ツール `oci-cli`/`supabase`(＋依存・tap) を除去。`cmux` は宣言下に追加＋ `homebrew.taps` に `manaflow-ai/cmux` を宣言（untap 拒否エラー回避）。cmux/appium 生存を確認
+- [ ] 5.5a (任意・保留) 旧 standalone home-manager の残骸プロファイル (`~/.local/state/nix/profiles/home-manager*`) の掃除。無害な未使用世代のため後日 GC で可
+- [x] 5.6 `README.md` を Nix 版（Determinate → `darwin-rebuild switch`、構成・日常運用）へ全面更新
+- [x] 5.7 ロールバック（`--rollback`）とクリーン再現手順を README に追記
+- [x] 5.8 撤去・cleanup・ドキュメント更新分をコミットする
