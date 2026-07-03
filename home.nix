@@ -34,6 +34,10 @@ in
       save = 1000000;
       extended = true; # extended_history
       share = true; # share_history
+      # 旧 .zshrc は重複・先頭スペースのコマンドも記録していたため、HM 既定 (true) を
+      # 無効化して従来どおり全記録にする。
+      ignoreDups = false;
+      ignoreSpace = false;
     };
 
     shellAliases = {
@@ -76,12 +80,18 @@ in
           command ssh "$@"
       }
 
-      # Homebrew (cask/mas 用 formula の CLI を PATH に載せる)
-      eval "$(/opt/homebrew/bin/brew shellenv)"
-
-      # ~/.local/bin と Nix プロファイルを Homebrew より優先させる。
-      # (appium の依存で入る brew node より nix の node を優先させるため)
-      export PATH="$HOME/.local/bin:/etc/profiles/per-user/$USER/bin:$PATH"
+      # macOS 固有の PATH 設定。この .zshrc は上の ssh() 関数でリモートへ scp される
+      # ため、非 macOS では brew/nix プロファイルの行を実行せず ~/.local/bin のみに
+      # 留め、リモートシェルが壊れないようにする（旧 .zshrc の挙動に合わせる）。
+      if [[ "$OSTYPE" == darwin* ]]; then
+        # Homebrew (cask/mas 用 formula の CLI を PATH に載せる)
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+        # ~/.local/bin と Nix プロファイルを Homebrew より優先させる。
+        # (appium の依存で入る brew node より nix の node を優先させるため)
+        export PATH="$HOME/.local/bin:/etc/profiles/per-user/$USER/bin:$PATH"
+      else
+        export PATH="$HOME/.local/bin:$PATH"
+      fi
     '';
   };
 
