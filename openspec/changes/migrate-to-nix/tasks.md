@@ -1,12 +1,14 @@
-## 0. 事前確定（着手前の意思決定）
+## 0. 事前確定（解決済み）
 
-- [ ] 0.1 nixpkgs チャンネル (stable `nixos-25.11` か `nixpkgs-unstable`) を確定する（再現性の核に効くため Phase 1 着手前に決める / Open Question）
+- [x] 0.1 nixpkgs チャンネル = `nixpkgs-unstable` に確定（darwin の網羅性・鮮度重視。再現性は flake.lock で担保）
+- [x] 0.2 対象アーキテクチャ = `aarch64-darwin`（Apple Silicon）に確定
+- [x] 0.3 `appium` / `periphery` は nixpkgs 未提供を `nix search` で確認 → `homebrew.brews` に残すことに確定
 
 ## 1. 土台: Nix インストールと最小構成で switch を通す
 
 - [ ] 1.1 Determinate Systems 製インストーラで Nix を導入する (`curl -fsSL https://install.determinate.systems/nix | sh -s -- install`)
 - [ ] 1.2 実ホスト名を確認する (`scutil --get LocalHostName`) — `flake.nix` の `darwinConfigurations` キーに使う
-- [ ] 1.3 `flake.nix` を作成し、inputs に `nixpkgs` / `nix-darwin` / `home-manager` を宣言、outputs に `darwinConfigurations.<host>` を定義する
+- [ ] 1.3 `flake.nix` を作成し、inputs に `nixpkgs`(→`nixpkgs-unstable`) / `nix-darwin` / `home-manager` を宣言、outputs に `darwinConfigurations.<host>`（system: `aarch64-darwin`）を定義する
 - [ ] 1.4 `darwin.nix` に最小のシステム構成を書き、`nix.enable = false;`（Determinate 競合回避）を設定する
 - [ ] 1.5 `home.nix` に最小の home-manager 構成を書き、nix-darwin のモジュールとして組み込む
 - [ ] 1.6 `darwin-rebuild switch --flake .#<host>` が成功することを確認する（最初の成功体験）
@@ -16,7 +18,7 @@
 
 - [ ] 2.1 `nix search` で各 CLI の nixpkgs 提供を確認する（`git` `tmux` `node` `ffmpeg` `gh` `ghq` `uv` `yt-dlp` `swiftlint`）
 - [ ] 2.2 nixpkgs にあるものを `home.packages`（または git/tmux は後続の native モジュール）で宣言する
-- [ ] 2.3 `appium` / `periphery` の提供有無を確認し、無ければ `homebrew.brews` に残す方針を確定する
+- [ ] 2.3 `appium` / `periphery` を `homebrew.brews` に列挙する（nixpkgs 未提供を確認済み: task 0.3）
 - [ ] 2.3a `chezmoi` formula はこの Phase では Nix へ移さず既存 brew のまま残す（Phase 4 の一致確認に使うため。撤去は Phase 5）
 - [ ] 2.4 `switch` して各 CLI が Nix 経由で PATH 上に来ることを確認し、対応する formula を `dot_Brewfile` から削除する
 - [ ] 2.5 CLI 移行分をコミットする

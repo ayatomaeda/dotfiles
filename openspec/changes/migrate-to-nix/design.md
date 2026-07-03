@@ -73,8 +73,12 @@ Web / context7 で 2026 年時点のベストプラクティスを検証済み (
 
 段階移行 (proposal / tasks.md の 5 ステップ)。各ステップ末尾で `darwin-rebuild switch` → 動作確認 → git コミット。ロールバックは直前コミットへ戻すか、nix-darwin の世代ロールバック (`darwin-rebuild --rollback`) で行う。chezmoi と `dot_*` の撤去は全 dotfiles の home-manager 移行と一致確認が済んだ最終ステップでのみ実施する。
 
+## Resolved Decisions（旧 Open Questions）
+
+- **nixpkgs チャンネル = `nixpkgs-unstable`（確定）**。再現性は `flake.lock` のピン留めで担保されるためチャンネル差は「更新頻度と鮮度」のみ。darwin はパッケージ網羅性・バイナリキャッシュの鮮度が unstable の方が良く、`yt-dlp`/`uv`/`node`/`gh` など鮮度が効くツールを含むため unstable を採用。将来更新の破壊が煩わしくなれば stable (`nixos-25.11`) ベースへ、または「stable ベース＋一部 unstable 混在」へ後から移行可能。
+- **`appium` / `periphery` = Homebrew に残す（確定）**。`nix search nixpkgs` で確認した結果、両者とも nixpkgs に無い（`periphery` は無関係な `python-periphery`/`c-periphery` のみ、`appium` はサーバ本体ではなく `appium-inspector`/`appium-python-client` のみ）。したがって `homebrew.brews` に列挙する。
+- **対象アーキテクチャ = `aarch64-darwin`（Apple Silicon）**。x86_64-darwin の非推奨 (Nixpkgs 26.05 で最後) の影響を受けない。
+
 ## Open Questions
 
-- nixpkgs チャンネルは stable (`nixos-25.11`) と `nixpkgs-unstable` のどちらを既定にするか。darwin は unstable 利用も一般的だが、初心者の安定性重視なら stable。→ 実装開始時に確定（暫定: unstable 寄り、要相談）。
-- `appium` / `periphery` の nixpkgs 提供有無 → Step 2 の存在確認で確定。
 - 将来 `nix.*` 設定を増やす必要が出た時点で determinateNix モジュールへ移行するか（現状は `nix.enable = false` で開始）。
