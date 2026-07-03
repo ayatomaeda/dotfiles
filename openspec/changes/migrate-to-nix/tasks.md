@@ -40,14 +40,14 @@
 
 ## 4. dotfiles: home-manager へ移行
 
-- [ ] 4.0 既存の素ファイル (`~/.zshrc` 等) と HM の symlink 生成の衝突を避けるため `home-manager.backupFileExtension = "hm-bak";` を設定する（または対象ファイルを事前削除）。`programs.zsh` では brew shellenv も明示して PATH を恒久化する
-- [ ] 4.1 `programs.zsh` を作成し、alias・history オプション・カスタム ssh 関数・`PATH` を移植する
-- [ ] 4.2 `programs.git` を作成し、user/署名(`op-ssh-sign`)/ghq root/`init.defaultBranch` を移植する
-- [ ] 4.3 `programs.tmux` を作成する
-- [ ] 4.4 ghostty `config` を `mkOutOfStoreSymlink` でリポジトリ実体へリンクする
-- [ ] 4.5 ssh の `config` / `config.d/` を out-of-store symlink で管理する（秘密鍵を含めない）
-- [ ] 4.6 claude の statusline スクリプトを実行可能属性付きで配置する
-- [ ] 4.7 各ファイルごとに `switch` して chezmoi 適用結果と `diff` で一致を確認する
+- [x] 4.0 `home-manager.backupFileExtension = "hm-bak"` を flake.nix に設定（衝突時 `.hm-bak` 退避）。`programs.zsh.initContent` に brew shellenv を明示
+- [x] 4.1 `programs.zsh` に alias・history・カスタム ssh 関数・PROMPT・zstyle・`PATH` を移植（既存 .zshrc は `.zshrc.hm-bak` に退避）
+- [x] 4.2 `programs.git`（`settings` 形式）に user/署名(`op-ssh-sign`)/ghq root/`init.defaultBranch` を移植。旧 `~/.gitconfig` を除去し HM の `~/.config/git/config` を単独ソース化。署名設定の実効値を検証済み
+- [x] 4.3 `programs.tmux.enable`（既存 tmux 設定ファイルは無いため最小）
+- [x] 4.4 ghostty `config` を `mkOutOfStoreSymlink` でリンク（実体到達を検証済み）
+- [x] 4.5 ssh の `config` / `config.d/` を out-of-store symlink 化（秘密鍵は対象外・無事）
+- [x] 4.6 claude statusline スクリプトを symlink 配置（実行可能属性は実体側で保持）
+- [x] 4.7 switch 後に検証: 5 ファイルの symlink 実体到達 / .zshrc 主要要素の移植 / git identity・署名の実効値をすべて確認
 - [ ] 4.8 dotfiles 移行分をコミットする
 
 ## 5. 撤去: chezmoi と Brewfile を削除しドキュメント更新

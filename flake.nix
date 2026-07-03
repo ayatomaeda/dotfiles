@@ -37,6 +37,9 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            # 既存の素ファイル (chezmoi 由来の ~/.zshrc 等) と衝突した場合は
+            # .hm-bak へ退避してから HM のファイルを配置する (消失防止の安全網)。
+            home-manager.backupFileExtension = "hm-bak";
             home-manager.users.${username} = import ./home.nix;
             home-manager.extraSpecialArgs = { inherit username; };
           }
