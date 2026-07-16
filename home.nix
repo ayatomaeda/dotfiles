@@ -22,6 +22,10 @@ in
     uv
     yt-dlp
     swiftlint
+    # 実機 iOS Safari を CDP 経由で自動操作するため (Web Inspector リモートデバッグ)。
+    # libimobiledevice は idevice_id 等の診断 CLI と usbmuxd 連携を提供。
+    ios-webkit-debug-proxy
+    libimobiledevice
   ];
 
   # zsh を native モジュール化 (Phase 4)。既存 .zshrc の挙動を移植。
