@@ -22,6 +22,11 @@ in
     uv
     yt-dlp
     swiftlint
+    # homelab / oci クラスタの kubeconfig が exec plugin として呼ぶ OIDC 認証プラグイン。
+    # kubectl-oidc_login を提供し、`kubectl oidc-login` として解決される。
+    kubelogin-oidc
+    # homelab-k8s リポジトリの IaC (Proxmox VM / k3s) を適用するため。
+    opentofu
     # 実機 iOS Safari を CDP 経由で自動操作するため (Web Inspector リモートデバッグ)。
     # libimobiledevice は idevice_id 等の診断 CLI と usbmuxd 連携を提供。
     ios-webkit-debug-proxy
