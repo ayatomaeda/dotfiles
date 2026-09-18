@@ -1,0 +1,76 @@
+name: "flake.lock: 入力を更新"
+
+# flake の入力 (nixpkgs / nix-darwin / home-manager) の更新を人手のきっかけに
+# 依存させない。週次で PR を作り、ci.yml の評価で検証する。
+# 手動で更新していた頃は、更新コミットが feature ブランチ上に未マージで滞留していた。
+#
+# このリポジトリの flake.lock は、評価用の例の構成 (darwinConfigurations.example) に
+# だけ効く。利用側は follows で自分の input にそろえるので、この更新は利用側の構成を
+# 変えない。
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 毎週日曜 00:23 UTC (09:23 JST)。
+    # 毎時 0 分は GitHub 側の実行が混み合うため、ずらしてある。
+    - cron: "23 0 * * 0"
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write # PR へのラベル付与は issues API を経由する
+  id-token: write # determinate-nix-action が FlakeHub と通信するため
+
+jobs:
+  update:
+    name: Update flake.lock
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # GitHub App の資格情報が設定されていれば、1 時間で失効しジョブ終了時に revoke
+      # される installation token を発行する。未設定ならこのステップはスキップされ、
+      # outputs.token が空文字になるので下の `||` が次の候補へ落ちる。
+      # actionlint は `client-id` を未定義と誤検知する (内蔵メタデータが古く
+      # `app-id` しか知らない)。実際の @v3 では app-id が deprecated で client-id が現行。
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        if: vars.FLAKE_LOCK_APP_CLIENT_ID != ''
+        with:
+          client-id: ${{ vars.FLAKE_LOCK_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FLAKE_LOCK_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+
+      - uses: DeterminateSystems/update-flake-lock@v29
+        with:
+          # 既定のブランチ名 (update_flake_lock_action) を使い回すため、
+          # 前回の PR が未マージのまま次回が走っても PR は積み上がらず、
+          # 同じ PR が更新される (design の「更新 PR の滞留」シナリオ)。
+          pr-title: "chore: nix flake update"
+          pr-labels: |
+            dependencies
+            automated
+          # 認証の優先順位。上から順に、設定されているものが使われる。
+          #
+          # 1. GitHub App の installation token (公式ドキュメントが最初に挙げる方法)
+          #    vars.FLAKE_LOCK_APP_CLIENT_ID と secrets.FLAKE_LOCK_APP_PRIVATE_KEY
+          #    を設定すると有効になる。1 時間で失効し、リポジトリ単位・権限単位に
+          #    スコープされ、個人アカウントに紐づかない。
+          # 2. fine-grained PAT (secrets.FLAKE_LOCK_TOKEN)
+          #    contents:write + pull-requests:write が必要。長命で個人に紐づく。
+          # 3. GITHUB_TOKEN (フォールバック)
+          #    ただし既定では **PR の作成自体が拒否される**。これは
+          #    「Preventing GitHub Actions from creating or approving pull requests」
+          #    としてセキュリティ設定に載っている意図的な既定値で、Settings →
+          #    Actions → General から有効化しないと以下で失敗する:
+          #      GitHub Actions is not permitted to create or approve pull requests
+          #    有効化した場合でも、GITHUB_TOKEN が作成した PR の pull_request
+          #    イベント (opened / synchronize / reopened) は **承認待ち状態** の run に
+          #    なり、write 権限を持つ人の承認が必要になる (run が作られないのではない)。
+          #
+          # 1 か 2 を使えば、この承認プロンプトも作成制限も回避できる。
+          token: ${{ steps.app-token.outputs.token || secrets.FLAKE_LOCK_TOKEN || secrets.GITHUB_TOKEN }}

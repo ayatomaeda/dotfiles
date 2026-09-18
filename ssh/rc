@@ -1,0 +1,28 @@
+# sshd がログインのたびに (コマンドを実行する接続も含めて) /bin/sh で実行する (sshd(8) の SSHRC)。
+#
+# 転送された agent のソケットへ、固定パスの symlink を張る (herdr-remote-machines)。
+# herdr のサーバーは起動時の SSH_AUTH_SOCK を持ち続け、再接続しても更新しない
+# (herdr 0.9.1 時点、herdrdev/herdr Discussion #649)。ソケットは接続ごとに作り直されるので、
+# herdr のペインでは SSH_AUTH_SOCK をこの固定パスにしておき (modules/common/terminal.nix)、
+# 接続し直したときに先を張り替える。
+#
+# - **先が生きている間は張り替えない。** ssh の設定は ControlPersist 10s なので、
+#   `ssh <host> 'git …'` のような短い接続も転送ソケットを作り、10 秒ほどで消える。
+#   最後の接続に張り替えると、herdr で接続している最中にリンクの先が消える。
+# - **利用側との約束: agent を転送する先は、所有者の端末に限る** (split-public-core)。
+#   core は転送を有効にしない。利用側が programs.ssh.settings.<host>.ForwardAgent で宣言する。
+#   生きているリンクの先が、所有者が操作している端末の agent であることを、この前提で保つ。
+# - 応答しない接続 (スリープした Mac) のソケットは、sshd の ClientAliveInterval で
+#   切れたときに消える (modules/darwin/default.nix)。
+# - **何も出力しない。** 標準出力は接続の出力に混ざり、herdr の中継や `ssh host 'git …'` を壊す。
+# - 一時名で作って mv で置き換える。ln -sf は削除と作成の 2 手で、その間はリンクが無い。
+# - 判定の条件は modules/common/ssh.nix (1Password の Match) と git.nix の署名ラッパーにもあり、
+#   固定パスは terminal.nix も使う。パスを変えるときは 4 か所をそろえる。
+link="$HOME/.ssh/agent-forward.sock"
+if [ -S "$SSH_AUTH_SOCK" ] && [ "$SSH_AUTH_SOCK" != "$link" ] && [ ! -S "$link" ]; then
+  tmp="$link.$$"
+  rm -f "$tmp" 2>/dev/null
+  ln -s "$SSH_AUTH_SOCK" "$tmp" >/dev/null 2>&1 &&
+    mv -f "$tmp" "$link" >/dev/null 2>&1 ||
+    rm -f "$tmp" >/dev/null 2>&1
+fi

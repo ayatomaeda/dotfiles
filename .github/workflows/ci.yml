@@ -1,0 +1,137 @@
+name: CI
+
+# 構成の破壊を、利用側の実機への switch ではなく PR の時点で検出する。
+# このリポジトリは実在のホストを持たないので、評価用の例の構成
+# (darwinConfigurations.example) を評価する。利用側の実ホストの評価は、利用側の
+# リポジトリの CI が行う。
+# 実ビルドはしない。オプション名の変更・typo・モジュール衝突・入力の破壊的変更は
+# すべて評価の時点で顕在化するため。
+#
+# 注意: activation 時にしか起きない失敗 (とくに brew bundle) はここでは捕まらない。
+# Homebrew 側の drift は、利用側の autoUpdate と意図的な brew upgrade で扱う。
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # PAT を置かない運用では、自動生成された flake.lock 更新 PR のブランチに対して
+  # ここから手動で回す (update-flake-lock.yml のコメント参照)。
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    name: Evaluate flake
+    # aarch64-darwin の構成も Linux 上で評価できる (評価はプラットフォーム非依存で、
+    # nix-darwin は IFD を用いないため)。macOS runner を使わずに済む。
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+
+      # --all-systems が無いと `The check omitted these incompatible systems:
+      # aarch64-darwin` となり、Linux runner では何も検査されない。
+      #
+      # Determinate Nix の flake check は darwinConfigurations も評価対象に含める
+      # (`evaluating 'darwinConfigurations.example'…` →
+      #  `✅ darwinConfigurations.… (build skipped)` を出力する)。オプション名の
+      # typo も attrset 自体の壊れ方も、実際にこのステップで exit 1 になることを
+      # 確認済み。**ただしこれは nix の実装依存の振る舞いであり、flake の仕様として
+      # 保証されたものではない。** 次のステップは「宣言した全ホストを必ず評価する」
+      # ことを自前で保証するために置いてあり、冗長ではない。
+      # また flake check は**出力そのものが消えたこと**は検出できない (何も無ければ
+      # 検査対象が無いだけ)。それは次のステップの required 判定が受け持つ。
+      - name: nix flake check (評価のみ)
+        run: nix flake check --no-build --all-systems
+
+      - name: 全ホスト構成を評価
+        run: |
+          set -euo pipefail
+
+          # 宣言から対象を取り出すので、ホストを追加しても CI の書き換えは不要。
+          # homeConfigurations は宣言していないのでスキップされる。
+          # standalone の home-manager の例を足したら、この関数がそのまま拾う。
+          #
+          # **「宣言されていない」と「宣言はあるが評価が失敗した」を必ず区別する。**
+          # 両者をまとめてスキップ扱いにすると、attrset 自体が評価できない壊れ方
+          # (flake.nix の重複定義や構文エラー) を「未定義」と誤認して飲み込む。
+          #
+          # 第 1 引数は required / optional。
+          # **darwinConfigurations は「常に存在しなければならない唯一の出力」**なので
+          # required にする。optional と同じ扱いにしていると、リネームや削除
+          # (typo、flake-parts へのリファクタ) で出力が消えたときに
+          # 「宣言されていないためスキップ」と表示して exit 0 になり、
+          # **何も検証しないまま CI が green になる**。前段の flake check も
+          # 「出力が無いこと」は検出できない (リネームした flake で exit 0 を実測)。
+          #
+          # **宣言の有無は nix のエラー文言に依存せずに判定する。**
+          # 以前は `does not provide attribute` を grep していたが、これは安定した
+          # インターフェースではない。nix 側が言い換えると optional の出力まで
+          # 「評価に失敗した」と判定して、**リポジトリに変更が無くても全 PR が
+          # 赤くなる**。`builtins.getFlake` + `?` 演算子は値を force しないので、
+          # 「宣言されているか」だけを意味論的に問える。
+          # なお `nix eval '.#' --apply ...` は使えない (`.#` が default package に
+          # 解決される)。`nix flake show --json` の形は実装依存 (Determinate Nix は
+          # inventory で包む) なので採らない。
+          eval_all() {
+            local requirement="$1" output="$2" attr_path="$3" declared names names_json
+
+            if ! declared=$(nix eval --impure --json \
+                 --expr "let f = builtins.getFlake (toString ./.); in f ? ${output}"); then
+              echo "── ${output}: flake の出力一覧を取得できなかった"
+              return 1
+            fi
+
+            if [ "$declared" != true ]; then
+              if [ "$requirement" = required ]; then
+                echo "── ${output}: **必須の出力が宣言されていない**"
+                echo "   この出力が消えると CI は何も検証しなくなるため失敗させる。"
+                return 1
+              fi
+              echo "── ${output}: 宣言されていないためスキップ (任意の出力)"
+              return 0
+            fi
+
+            # ここから先は「宣言されている」ことが確定しているので、
+            # 評価の失敗は常にそのまま失敗させる。
+            if ! names_json=$(nix eval --json ".#${output}" --apply builtins.attrNames); then
+              echo "── ${output}: 評価に失敗した"
+              return 1
+            fi
+
+            names=$(printf '%s' "$names_json" | jq -r '.[]')
+
+            if [ -z "$names" ]; then
+              if [ "$requirement" = required ]; then
+                echo "── ${output}: **必須の出力が空である**"
+                return 1
+              fi
+              echo "── ${output}: 空のためスキップ (任意の出力)"
+              return 0
+            fi
+
+            # ホスト単位の失敗を明示的に拾う。ループの最後が echo だと関数の
+            # 戻り値が常に 0 になり、失敗の検出が呼び出し側の `set -e` だけに
+            # 依存してしまう。全ホストを評価してから結果を返す (最初の失敗で
+            # 止めると残りのホストの状態が分からない)。
+            local failed=0
+            while IFS= read -r name; do
+              echo "── ${output}.${name}"
+              if ! nix eval --raw ".#${output}.\"${name}\".${attr_path}"; then
+                echo "   ↑ ${output}.${name} の評価に失敗した"
+                failed=1
+              fi
+              echo
+            done <<< "$names"
+
+            return "$failed"
+          }
+
+          eval_all required darwinConfigurations 'config.system.build.toplevel.drvPath'
+          eval_all optional homeConfigurations   'activationPackage.drvPath'
+
