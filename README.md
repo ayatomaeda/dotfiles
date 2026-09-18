@@ -296,8 +296,13 @@ $ herdr agent list              # 認識しているエージェントの一覧 
 
 起動時に新しい版を見つけるとログに出すが、**`herdr update` は使わない**。版は `flake.lock` で決める。
 
-設定は `modules/common/terminal.nix` の `programs.herdr.settings` に書く (onboarding を飛ばす指定と
-テーマ `tokyo-night`)。switch すると herdr のサーバーが設定を読み直す。**設定画面 (`prefix+s`) で
+裏のタブのエージェントが完了・入力待ちになると、音に加えて Ghostty のデスクトップ通知が出る
+(`ui.toast.delivery = "terminal"`)。接続先の herdr に attach しているときも、通知は接続元に出る。
+初めての通知では macOS が Ghostty の通知を許可するか尋ねる。拒否した場合は、システム設定の「通知」で
+Ghostty を許可する。
+
+設定は `modules/common/terminal.nix` の `programs.herdr.settings` に書く (onboarding を飛ばす指定、
+テーマ `tokyo-night`、通知)。switch すると herdr のサーバーが設定を読み直す。**設定画面 (`prefix+s`) で
 apply しても何も起きない** — 書き込みに失敗して、いまのセッションにも反映されない (実測)。
 
 ## SSH

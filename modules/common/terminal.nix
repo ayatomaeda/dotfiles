@@ -331,6 +331,13 @@
       # Ghostty のテーマ (TokyoNight。modules/common/ghostty.nix) にそろえる。
       # 組み込みのテーマ名は `herdr --default-config` の [theme] に一覧がある。
       theme.name = "tokyo-night";
+
+      # 裏のタブのエージェントが完了・入力待ちになったら、デスクトップ通知を出す
+      # (既定は off。音 (ui.sound) は既定で鳴る)。"terminal" は外側の端末 (Ghostty。
+      # desktop-notifications の既定は true) に通知を頼む方式で、サーバーではなく
+      # client が出すので、接続元から接続先の herdr に attach していても通知は
+      # 接続元に出る。"system" は osascript に落ちると通知から端末を前に出せない。
+      ui.toast.delivery = "terminal";
     };
   };
 }
