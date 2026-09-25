@@ -13,5 +13,6 @@
     gh
     ghq
     uv
+    argocd
   ];
 }
