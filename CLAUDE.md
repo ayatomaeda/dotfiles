@@ -200,6 +200,16 @@ dry-run、評価) までを担当する。このリポジトリの変更は、�
   `direnv exec . <cmd>` と明示する。逆に言えば、フックを前提にした仕掛けを「エージェントでも
   効くはず」と考えないこと。
 
+- **`home.sessionVariables` の変更は、switch しても既存のシェルに入らない — `exec zsh -l` でも入らない** —
+  `hm-session-vars.sh` は冒頭で `__HM_SESS_VARS_SOURCED` を見て、設定済みなら何もせずに戻る。
+  この変数は export されるので、そのシェルから起動したものはすべて受け継ぎ、読み込みを飛ばす。
+  `exec zsh -l` や新しい子シェルでも同じで、変数を足した直後に空のままになる (実測)。
+  - 手元のシェルは `unset __HM_SESS_VARS_SOURCED; exec zsh -l` で入れ直す。
+  - herdr / tmux の新しいペインはサーバーの環境を受け継ぐので、サーバーを起動し直すまで入らない。
+  - 起動中の Claude Code のシェルも古い環境のまま。起動し直す。
+  - 端末のアプリの新しいウィンドウは launchd から起動するので入る。
+  「switch したのに変数が空」と言われたら、まず `echo $__HM_SESS_VARS_SOURCED` を見る。
+
 - **`core.pager` / `pager.<コマンド>` と `diff.external` は TTY の扱いが違う** — 前者は
   出力が TTY でないとき git が自動的にページャを無効化するが、**後者は TTY と無関係に起動する**。
   そのため `delta` を pager に置いてもエージェントの `git diff` は素の unified diff のままだが、
