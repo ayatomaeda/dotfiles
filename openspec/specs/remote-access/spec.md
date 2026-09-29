@@ -2,7 +2,6 @@
 
 ## Purpose
 Mac への SSH ログインを公開鍵認証に限ることと、所有者の端末同士の ssh で agent を転送し、git の操作と署名の承認を接続元で行えるようにすること。
-
 ## Requirements
 ### Requirement: SSH ログインは公開鍵認証に限る
 
@@ -36,7 +35,7 @@ Mac への SSH ログインを公開鍵認証に限ることと、所有者の�
 
 以下、ssh する側の所有者の Mac を**接続元**、ssh される側の所有者の Mac を**接続先**と呼ぶ。転送を有効にする接続先は、利用側が宣言する (`programs.ssh.settings.<host>.ForwardAgent`)。
 
-転送された agent を使うかどうかは、次のどちらかで判定しなければならない (SHALL)。(a) `SSH_CONNECTION` が設定され、かつ `SSH_AUTH_SOCK` のソケットが実在する (ssh 越しのシェル)。(b) `SSH_AUTH_SOCK` が転送用の固定パス (`~/.ssh/agent-forward.sock`) で、かつその先のソケットが実在する (herdr のペイン)。ssh の設定 (`modules/common/ssh.nix` の 1Password の `Match`) と署名ラッパーは同じ条件を使わなければならない (SHALL)。tmux は detach のときに環境を戻さないので、`SSH_CONNECTION` だけでは切断後の古い値を拾う。`SSH_TTY` は TTY を伴わない実行で設定されないため、判定に使ってはならない (MUST NOT)。
+転送された agent を使うかどうかは、次のどちらかで判定しなければならない (SHALL)。(a) `SSH_CONNECTION` が設定され、かつ `SSH_AUTH_SOCK` のソケットが実在する (ssh 越しのシェル)。(b) `SSH_AUTH_SOCK` が転送用の固定パス (`~/.ssh/agent-forward.sock`) で、かつその先のソケットが実在する (herdr のペイン)。ssh の設定 (`modules/common/ssh.nix` の 1Password の `Match`)、署名ラッパー、署名鍵を選ぶコマンド (`gpg.ssh.defaultKeyCommand`) は同じ条件を使わなければならない (SHALL)。署名鍵を選ぶコマンドは、転送された agent を使うときは `SSH_AUTH_SOCK` の agent から、それ以外はその Mac の 1Password の agent から鍵を選ばなければならない (SHALL)。tmux は detach のときに環境を戻さないので、`SSH_CONNECTION` だけでは切断後の古い値を拾う。`SSH_TTY` は TTY を伴わない実行で設定されないため、判定に使ってはならない (MUST NOT)。
 
 ssh 越しでないときは、従来どおりその Mac 自身の 1Password を使わなければならない (SHALL)。
 
@@ -46,6 +45,17 @@ ssh 越しでないときは、従来どおりその Mac 自身の 1Password を
 
 - **WHEN** 接続元から `ssh <接続先>` し、`git pull` と署名付きコミットを行う
 - **THEN** 1Password の承認は接続元に表示され、承認すると両方が成功する
+
+#### Scenario: ssh 越しでの署名鍵の選択
+
+- **WHEN** 接続先の 1Password をロックし、`op` をサインインしていない状態で、接続元から `ssh <接続先>` して署名付きコミットを行う
+- **THEN** 署名付きコミットは成功し、署名鍵は接続元の 1Password の鍵から名前で選ばれる
+- **AND** 承認は接続元に表示され、接続先には何も表示されない
+
+#### Scenario: herdr のペインでの署名鍵の選択
+
+- **WHEN** 接続元から接続先の herdr に接続し直した後、接続前から動いているペインで署名付きコミットを行う
+- **THEN** 署名鍵は接続元の 1Password の鍵から名前で選ばれ、承認は接続元に表示される
 
 #### Scenario: TTY を伴わない実行
 

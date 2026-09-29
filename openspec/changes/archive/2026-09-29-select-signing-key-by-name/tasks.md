@@ -24,9 +24,9 @@
 - [x] 4.2 生成物を 1.1 と比べる: git の設定は `user.signingkey` が消えて `gpg.ssh.defaultKeyCommand` が増えるだけ。ssh の設定とラッパーの store パスは変わらない
 - [x] 4.3 評価が失敗することを確かめる: `signingKey` を残したとき (移行の案内)、`user.signingkey` を併用したとき (消す案内。`settings.user.signingkey`・`settings.user.signingKey`・`programs.git.signing.key` の 3 通り)、`onePassword.enable = false` で `user.signingkey` を宣言したとき (止まらないこと)、`signingKeyName = ""` のとき
 - [x] 4.4 `signingKeyName` を与えない構成と `onePassword.enable = false` の構成で、`commit.gpgsign`・`gpg.format`・`gpg.ssh.program`・`gpg.ssh.defaultKeyCommand` がどれも出力されず、生成物 (home-files と git の設定) に 1Password のパスと `/usr/bin/ssh-add` が無いことを確かめる。このリポジトリの例の構成も評価する
-- [ ] 4.5 build した鍵を選ぶスクリプトを、使い捨ての鍵と一時的な agent で試す: 一致 1 本 / 一致が先頭でない / 一致 0 本 / 鍵が 0 本の agent / 一致 2 本 / agent に接続できない / 通信に失敗する agent (終了コード 1 で案内文が無い) / 実物の 1Password の agent (ロック中を含む) / Claude Code のシェルからの実行 / 空白を含む名前 / 名前を先頭に含む別の鍵だけ / 正規表現の記号を含む名前 / コメントの無い鍵 / ecdsa の鍵。出力・終了コード・メッセージ (見た agent を含む) と、1 回の所要時間を記録する
+- [x] 4.5 build した鍵を選ぶスクリプトを、使い捨ての鍵と一時的な agent で試す: 一致 1 本 / 一致が先頭でない / 一致 0 本 / 鍵が 0 本の agent / 一致 2 本 / agent に接続できない / 通信に失敗する agent (終了コード 1 で案内文が無い) / 実物の 1Password の agent (ロック中を含む) / Claude Code のシェルからの実行 / 空白を含む名前 / 名前を先頭に含む別の鍵だけ / 正規表現の記号を含む名前 / コメントの無い鍵 / ecdsa の鍵。出力・終了コード・メッセージ (見た agent を含む) と、1 回の所要時間を記録する
 - [x] 4.6 使い捨てのリポジトリで、名前に一致しない場合の git の表示 (3 行) を確かめ、README に載せる文面と合わせる
-- [ ] 4.7 build したスクリプトを接続先の Mac に置き (`nix copy` など。switch しない)、接続元からの `ssh <接続先> '<スクリプトの store パス>'` と、接続先の herdr のペイン (接続元から接続したもの) で直接実行し、転送された agent の鍵が名前で選ばれることと、見た agent の表示を確かめる
+- [x] 4.7 build したスクリプトを接続先の Mac に置き (`nix copy` など。switch しない)、接続元からの `ssh <接続先> '<スクリプトの store パス>'` と、接続先の herdr のペイン (接続元から接続したもの) で直接実行し、転送された agent の鍵が名前で選ばれることと、見た agent の表示を確かめる
 
 ## 5. 文書
 
@@ -37,6 +37,6 @@
 
 ## 6. archive とマージ
 
-- [ ] 6.1 利用側の禁止語の検査を通す
-- [ ] 6.2 `openspec archive select-signing-key-by-name` で delta を `openspec/specs/` に反映し、この PR に積む
+- [x] 6.1 利用側の禁止語の検査を通す
+- [x] 6.2 `openspec archive select-signing-key-by-name` で delta を `openspec/specs/` に反映し、この PR に積む
 - [ ] 6.3 この PR のレビューを受けてマージする
