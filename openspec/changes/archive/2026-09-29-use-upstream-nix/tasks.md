@@ -35,4 +35,4 @@
 - [x] 6.1 利用側の禁止語の検査を、このブランチの全コミットと成果物に対して実行する
 - [x] 6.2 PR を作り、CI (ci.yml) が upstream の Nix で通ることを確かめる。PR の本文に、マージの後に行うこと (design の Migration Plan: `update-flake-lock.yml` の手動実行での確認と、各 Mac の入れ替え) はこの change の外で所有者が行うことを書く
 - [x] 6.3 `openspec archive use-upstream-nix` を実行し、archive した後に `openspec/specs/system-bootstrap/spec.md` の Purpose を、upstream の Nix を nix-darwin が管理する内容に書き換えてコミットする (delta では Purpose を変えられないため)
-- [ ] 6.4 マージする
+- [x] 6.4 マージする
