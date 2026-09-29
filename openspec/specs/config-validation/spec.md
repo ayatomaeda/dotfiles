@@ -2,7 +2,6 @@
 
 ## Purpose
 構成の破壊を、所有者の実機への適用ではなく PR の時点で検出する仕組みと、flake の入力を自動的な提案として更新する仕組み。
-
 ## Requirements
 ### Requirement: 構成の破壊は適用前に検出する
 
@@ -12,11 +11,18 @@
 
 検証の対象ホストは**宣言から取り出さなければならない** (SHALL)。ホストを追加したときに CI の定義を書き換える必要があってはならない (MUST NOT)。
 
+CI は、所有者の Mac と同じく upstream の Nix で評価しなければならない (SHALL)。全ホストの構成の評価は、`nix flake check` が `darwinConfigurations` を評価するかどうかに依存してはならない (MUST NOT)。この振る舞いは Nix の実装によって違い、upstream の Nix の `nix flake check` は `darwinConfigurations` を評価しないためである。
+
 #### Scenario: PR での構成評価
 
 - **WHEN** `flake.nix` / `flake.lock` / `hosts/` / `modules/` 配下を変更する PR を作成する
 - **THEN** CI が `nix flake check` と全ホスト構成の評価を実行する
 - **AND** 評価に失敗した場合は PR のチェックが失敗する
+
+#### Scenario: flake check が評価しない構成の破壊
+
+- **WHEN** ホストの構成に存在しない option を書いた PR を作成する
+- **THEN** `nix flake check` が成功しても、全ホスト構成の評価で CI が失敗する
 
 #### Scenario: 評価対象の導出
 
@@ -48,6 +54,8 @@
 
 システムは、flake の入力 (`nixpkgs` / `nix-darwin` / `home-manager`) の更新を、**定期的に自動生成される Pull Request** として受け取らなければならない (SHALL)。更新を人手のきっかけに依存させてはならない (MUST NOT)。
 
+更新には Determinate Systems の action を使ってはならない (MUST NOT)。
+
 #### Scenario: 定期的な入力更新
 
 - **WHEN** スケジュールされた時刻になる
@@ -64,4 +72,11 @@
 
 - **WHEN** 前回の自動 PR が未マージのまま次回のスケジュールが実行される
 - **THEN** PR が複数積み上がらない (同一ブランチが更新される)
+- **AND** 更新した PR でも構成評価の CI が実行される
+- **AND** PR の本文は新しい変更の内容に替わる
+
+#### Scenario: 更新が無い週
+
+- **WHEN** スケジュールされた時刻に、更新した `flake.lock` が、開いている自動 PR のもの (無ければ main のもの) と同じである
+- **THEN** PR は作られず、既存の PR も変更されない
 
