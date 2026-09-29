@@ -13,6 +13,7 @@
 { config, lib, ... }:
 let
   cfg = config.dotfiles;
+  onePasswordPaths = import ./one-password.nix;
 in
 {
   programs.ssh = {
@@ -66,7 +67,8 @@ in
     // lib.optionalAttrs cfg.onePassword.enable {
       # 1Password の SSH agent を認証に使う。macOS 固有のパスを含むため、
       # 1Password を動かすホストにのみ出力する。
-      # 同じ鍵が git の署名にも使われる (modules/common/git.nix の署名ラッパー)。
+      # 同じ agent が git の署名にも使われる (modules/common/git.nix の署名ラッパーと、
+      # 署名鍵を名前で選ぶ keyCommand)。ソケットのパスは one-password.nix にある。
       #
       # ssh 越しのシェルでは適用しない (remote-agent-forwarding)。IdentityAgent は
       # SSH_AUTH_SOCK を上書きするため、無条件に置くと転送された agent が使われず、
@@ -75,7 +77,7 @@ in
       #   (a) SSH_CONNECTION があり、転送ソケットが実在する (ssh 越しのシェル、tmux)
       #   (b) SSH_AUTH_SOCK が固定パス ~/.ssh/agent-forward.sock で、その先が実在する
       #       (herdr のペイン。herdr-remote-machines。先は ssh/rc が張り替える)
-      # 条件は git.nix の署名ラッパーとそろえる。
+      # 条件は git.nix の isForwarded (署名ラッパーと鍵を選ぶ keyCommand が共有) とそろえる。
       #
       # - (b) で SSH_CONNECTION を見ないのは、接続先の Mac の前で起動した herdr の
       #   サーバーのペインには SSH_CONNECTION が無いため。固定パスとの一致を見るのは、ローカルの
@@ -94,7 +96,7 @@ in
       onePassword = {
         header = ''Match host * exec "[ ! -S \"$SSH_AUTH_SOCK\" ] || { [ -z \"$SSH_CONNECTION\" ] && [ \"$SSH_AUTH_SOCK\" != \"$HOME/.ssh/agent-forward.sock\" ]; }"'';
         # 値に空白を含むので、生成される行でも引用符で囲む必要がある。
-        IdentityAgent = ''"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"'';
+        IdentityAgent = ''"~/${onePasswordPaths.agentSocket}"'';
       };
     };
   };
