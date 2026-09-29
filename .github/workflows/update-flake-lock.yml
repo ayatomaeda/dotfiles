@@ -83,6 +83,13 @@ jobs:
       #
       # ラベル dependencies と automated はリポジトリに作ってある。消すと
       # `gh pr create` が失敗する。
+      #
+      # **自動の PR が開いている間に workflow を変える変更を main にマージすると、
+      # 次の実行の force push が拒否される** ("refusing to allow ... to create or
+      # update workflow")。ブランチを新しい main の上に作り直すと workflow のファイルが
+      # 変わることになり、それには token に workflows の権限が要るため。権限は足さず、
+      # そのときは自動の PR をブランチごと閉じてから (`gh pr close <番号>
+      # --delete-branch`)、この workflow を手動で実行し直す。
       - name: flake.lock を更新して PR を作る
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.FLAKE_LOCK_TOKEN || secrets.GITHUB_TOKEN }}
@@ -100,16 +107,20 @@ jobs:
             exit 0
           fi
 
-          if git fetch --quiet --depth 1 origin "$BRANCH" 2>/dev/null \
+          # ブランチと比べるのは PR が開いているときだけ。ブランチだけが残っている
+          # (PR の作成に失敗した、PR を閉じた) ときに比べると、上流が動かない週に
+          # PR が作られないまま run が成功してしまう。
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$pr" ] \
+             && git fetch --quiet --depth 1 origin "$BRANCH" \
              && git diff --quiet FETCH_HEAD HEAD -- flake.lock; then
-            echo "flake.lock は ${BRANCH} と同じ。何もしない。"
+            echo "flake.lock は開いている PR #${pr} と同じ。何もしない。"
             exit 0
           fi
 
           git push --force origin "HEAD:refs/heads/${BRANCH}"
 
           body=$(git log -1 --format=%b)
-          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
           if [ -n "$pr" ]; then
             gh pr edit "$pr" --body "$body"
           else
