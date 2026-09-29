@@ -86,10 +86,15 @@ $ direnv deny                 # 許可を取り消す
 |---|---|
 | `git diff` / `log -p` / `show` / `blame` | delta で色付き表示 |
 | `git dft` | difftastic で構文単位の差分。`git dft --stat` のように引数も渡せる |
-| `git commit` | 1Password の SSH 鍵で自動署名。1Password の承認 (Touch ID 等) を求められることがある |
+| `git commit` | 1Password の SSH 鍵で自動署名 (利用側が `dotfiles.git.signingKeyName` を与えたとき)。鍵は 1Password の項目名で選ぶ。1Password の承認 (Touch ID 等) を求められることがある |
 | `ghq get <owner>/<repo>` | `~/git/github.com/<owner>/<repo>` へ clone (以後 `Ctrl-G` の候補に入る) |
 
 delta の画面は `less` なので、`q` で終了、`/` で検索、`n` / `N` で次 / 前の一致。
+
+署名付きコミットが `warning: gpg.ssh.defaultKeyCommand failed: …` で止まったら、原因はその行の
+メッセージにある (項目名の不一致、同じ名前の項目が 2 つ、1Password のロック、転送の切断など)。
+続く `user.signingKey needs to be set` に従って `user.signingkey` を設定しない — 名前による選択が
+黙って外れる。読み方は README の「コミット署名」。
 
 ## ssh
 
