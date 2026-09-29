@@ -2,7 +2,6 @@
 
 ## Purpose
 CLI ツール、GUI アプリ、Mac App Store アプリの宣言のしかた。Nix で扱えるものは Nix で、扱えないものは nix-darwin の homebrew モジュールで宣言し、削除を伴う変更は適用の前に確かめる。
-
 ## Requirements
 ### Requirement: CLI ツールは Nix ネイティブで宣言する
 
@@ -26,7 +25,7 @@ CLI ツール、GUI アプリ、Mac App Store アプリの宣言のしかた。N
 
 - **WHEN** `homebrew.brews` に置いているツールが pin 済みの nixpkgs に存在することを確認した
 - **THEN** そのツールを `home.packages` へ移し、`homebrew.brews` から削除する
-- **AND** 確認は `nix search` ではなく **`flake.lock` が pin している rev に対する評価**で行う (`nix search nixpkgs` は Determinate Nix の `extra-nix-path` により FlakeHub の nixpkgs-weekly を参照するため、pin と一致しない)
+- **AND** 確認は **`flake.lock` が pin している rev に対する評価**で行う (どの rev を見たかを明示するため。`nix search nixpkgs` の結果は、その Mac の registry が指す rev に依存する)
 
 ### Requirement: GUI アプリと Mac App Store アプリは homebrew モジュールで宣言する
 

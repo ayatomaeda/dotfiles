@@ -14,7 +14,7 @@ flake の input として取り込み、ホストの構成と環境固有の値 
 | 出力 | 中身 |
 |---|---|
 | `homeModules.default` | home-manager のモジュール (`modules/common/`)。zsh / git / tmux / 端末のツール / Ghostty / Claude Code / ssh / neovim の設定と、どの環境でも使う CLI ツール |
-| `darwinModules.default` | nix-darwin のモジュール (`modules/darwin/`)。Nix の管理の無効化 (Determinate Nix 前提)、sshd の認証方式、home-manager の統合の設定、どの環境でも使う cask と App Store アプリのリスト |
+| `darwinModules.default` | nix-darwin のモジュール (`modules/darwin/`)。Nix の設定 (flakes の有効化、channel の無効化。設定と daemon は nix-darwin が管理する)、sshd の認証方式、home-manager の統合の設定、どの環境でも使う cask と App Store アプリのリスト |
 | `darwinConfigurations.example` | **評価用の例の構成 (実在のホストではない)**。CI が評価して、モジュールが利用側なしでも壊れていないことを確かめる。利用側の書き方の見本も兼ねる |
 
 | ファイル / ディレクトリ | 役割 |
@@ -104,6 +104,7 @@ core のモジュールが正しく動くために、利用側の宣言に頼っ
 | core の前提 | 利用側が与えるもの |
 |---|---|
 | `darwinModules.default` が `home-manager.*` を設定する | home-manager の darwin モジュールの読み込み |
+| Nix の設定と daemon を nix-darwin が管理する | その Mac に **upstream の Nix** が入っていること。Determinate Nix が残っていると activation が止まる ([入れ替えの手順](#determinate-nix-から-upstream-の-nix-への入れ替え)) |
 | Ghostty の設定 (`package = null`、`font-family`) | Ghostty 本体と 2 つのフォント。core の Homebrew のリストにあるが、効くのは `homebrew.enable = true` のときだけ |
 | 1Password の SSH agent と `op-ssh-sign` | 1Password のアプリ (同上) と、その SSH agent の有効化 |
 | 署名鍵を項目名で選ぶ (`dotfiles.git.signingKeyName`) | 署名する Mac と、ssh の接続元のどれの 1Password にも、その名前の SSH Key の項目が**ちょうど 1 つ**あり、SSH agent がその鍵を出していること |
@@ -460,7 +461,8 @@ Claude Code は `~/.claude/settings.json` を読み取り専用のまま扱い�
 ## `darwin-rebuild` について
 
 **`darwin-rebuild` は呼び出し側の PATH に依存しない。** スクリプトが冒頭で自分の `PATH` を上書きし、
-`coreutils` / `jq` / `git` / `nix` を store と `/nix/var/nix/profiles/default/bin` から解決する。
+`coreutils` / `jq` / `git` / `nix` を store から解決する (`nix` は nix-darwin の `nix.package`。
+`/nix/var/nix/profiles/default/bin` はその後ろの予備)。
 だから `sudo` が PATH をどう扱うかは関係なく、**世代がひとつでもあれば安定した絶対パスで必ず動く**:
 
 ```sh
@@ -477,3 +479,83 @@ $ sudo /run/current-system/sw/bin/darwin-rebuild switch --flake .#<host>
 
 いずれの場合も `sudo nix run nix-darwin -- switch` で代替しないこと。
 **registry 解決で nix-darwin の master を取るため `flake.lock` の pin から外れる。**
+
+## Determinate Nix から upstream の Nix への入れ替え
+
+core は upstream の Nix を前提にし、Nix の設定と daemon を nix-darwin に管理させる (`use-upstream-nix`)。
+Determinate Nix が入った Mac は、core を上げた構成に switch する前に、Nix を入れ替える。一度きりの作業。
+
+### 先に知っておくこと
+
+- **`/nix` がボリュームごと消える。入れ替えより前の世代には戻れない。** ストアは入れ直した後に取り直す。
+- **作業中 (手順 2 から 5 の間) に止まるもの:**
+  - sshd は nix-darwin の設定が外れ、macOS の既定に戻る。**公開鍵 (nix-darwin の authorized keys) では
+    入れず、パスワード認証を受け付ける。** 信頼できるネットワークで行う。
+  - Touch ID の sudo。
+  - home-manager の設定 (`~/.zshrc`、`~/.ssh/config`、git の設定)。リンクの先の store が消えるため。
+  - `/nix/store` から動いているもの (tmux、herdr、そこから起動したシェル)。削除でボリュームが
+    強制的にアンマウントされ、落ちる。
+- **Terminal.app の素のシェルで、tmux と herdr の外で行う。**
+- **接続先の Mac は、その Mac の前で行うか、herdr を通さない素の ssh で行う。** ssh で行うときは、
+  手順 2 の後で**既存の接続を閉じずに**、別の接続からパスワードでログインできることを確かめてから先へ進む。
+- **git の設定も消えるので、コミットは switch の後に行う。**
+- **利用側の lock は、先にコミットしておく。** switch は利用側のコミットに無い lock から行わない。
+  1. 利用側で core だけを上げる PR (`nix flake update core`) を作り、CI を通す。
+  2. すべての Mac を入れ替えられる時期にマージし、各 Mac はそのコミットを pull してから下の手順を行う。
+  3. **入れ替えていない Mac では switch しない。** 誤って switch すると activation は止まるが、system の
+     プロファイルに世代が残り、再起動すると `/run/current-system` がその世代を指す。止まったら、再起動の前に
+     `sudo /run/current-system/sw/bin/darwin-rebuild --rollback` で戻す。1 台ずつ移す期間が長くなるなら、
+     残る Mac のホストに一時的に `nix.enable = lib.mkForce false;` を与える (構成は今までと同じになる)。
+  4. 利用側の週次の lock 更新の PR は core も上げる。入れ替えの前にマージしない。
+
+### 手順
+
+利用側のリポジトリで、core を上げたコミットを pull してから行う。
+
+```sh
+# 1. (ssh の場合) 別の接続を 1 本開いたままにしておく
+
+# 2. nix-darwin を外す。/etc と nix-darwin のサービスが元に戻る。Homebrew のアプリは消えない。
+#    Determinate のアンインストーラは、nix-darwin が入っていると削除を拒否する。
+$ sudo darwin-uninstaller
+
+# 3. Determinate Nix を消す。新しいターミナルで行う。
+#    "nix-darwin installation detected" で拒否されたら、`which darwin-rebuild` が空か確かめる。
+$ sudo /nix/nix-installer uninstall
+
+# 4. NixOS の公式のインストーラで入れる。新しいターミナルで行う。
+#    --enable-flakes 以外のフラグ (--extra-conf など) を付けない。nix.conf の中身が変わり、
+#    nix-darwin が既知のものと認めず、次の switch が止まる。
+$ curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install --enable-flakes
+
+# 5. 新しいターミナルで、利用側のリポジトリから初回の構築を行う。darwin-rebuild は /nix とともに
+#    消えているので、build 結果のものを使う。
+$ nix build .#darwinConfigurations.<host>.system
+$ sudo ./result/sw/bin/darwin-rebuild switch --flake .#<host>
+$ rm result
+```
+
+手順 5 の switch が `/etc` の既存のファイルで止まったとき:
+
+- `/etc/nix/nix.conf`、`/etc/zshrc` などは、案内どおり末尾に `.before-nix-darwin` を付けて退避し、
+  switch をやり直す。
+- `/etc/nix/nix.custom.conf` (`custom settings … aborting activation`) は、中身が空 (コメントだけ) で
+  あることを確かめて消す。設定が書いてあれば、利用側の `nix.settings` に移してから消す。
+
+### 確認
+
+新しいターミナルで:
+
+```sh
+$ nix --version                                    # Determinate Nix と出ない
+$ nix config show experimental-features            # nix-command と flakes を含む
+$ nix flake metadata nixpkgs --json | jq -r .locked.narHash
+$ jq -r .nodes.nixpkgs.locked.narHash flake.lock   # 上と一致する (利用側のリポジトリで)
+$ ls /usr/local/bin/determinate-nixd               # 無い
+$ sudo launchctl list | grep -E 'systems\.determinate\.nix-(daemon|store)'   # 何も出ない
+$ sudo launchctl print system/org.nixos.nix-daemon | grep -m1 program
+$ nix store info
+```
+
+upstream のインストーラも `systems.determinate.nix-installer.nix-hook` という名前の launchd の定義を置く。
+これは残ってよい。接続先の Mac では、公開鍵で ssh ログインできることも確かめる。

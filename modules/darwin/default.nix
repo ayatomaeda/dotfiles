@@ -10,10 +10,21 @@
     ./homebrew.nix
   ];
 
-  # Determinate Nix が Nix 本体/設定を管理するため、nix-darwin 側の Nix 管理は
-  # 無効化して競合 (activation abort) を避ける。カスタム Nix 設定が必要になったら
-  # /etc/nix/nix.custom.conf 側で行う。
-  nix.enable = false;
+  # Nix の設定 (/etc/nix/nix.conf、registry) と daemon は nix-darwin が管理する
+  # (use-upstream-nix)。**その Mac の Nix は upstream の Nix であることを前提にする。**
+  # Determinate Nix が残っていると、nix-darwin の検査で activation が止まる
+  # (入れ替えの手順は README)。
+  #
+  # flakes はここで有効にする。インストーラも nix.conf に書くが、nix-darwin が
+  # nix.conf を置き換えるので、宣言が無いと switch の後に消える。
+  #
+  # channel は使わない。構成は flake だけで扱い、NIX_PATH の nixpkgs は
+  # nix-darwin が利用側の flake.lock の nixpkgs に固定した registry で解決される。
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+  nix.channel.enable = false;
 
   # sshd は公開鍵認証だけを受け付ける (harden-remote-login)。
   # リモートログインは接続中のすべてのネットワークで 22 番を開けるため、公衆

@@ -32,20 +32,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: DeterminateSystems/determinate-nix-action@v3
+      # NixOS の公式リリースの Nix を入れ、flakes を有効にする (use-upstream-nix)。
+      - uses: cachix/install-nix-action@v31
 
       # --all-systems が無いと `The check omitted these incompatible systems:
       # aarch64-darwin` となり、Linux runner では何も検査されない。
       #
-      # Determinate Nix の flake check は darwinConfigurations も評価対象に含める
-      # (`evaluating 'darwinConfigurations.example'…` →
-      #  `✅ darwinConfigurations.… (build skipped)` を出力する)。オプション名の
-      # typo も attrset 自体の壊れ方も、実際にこのステップで exit 1 になることを
-      # 確認済み。**ただしこれは nix の実装依存の振る舞いであり、flake の仕様として
-      # 保証されたものではない。** 次のステップは「宣言した全ホストを必ず評価する」
-      # ことを自前で保証するために置いてあり、冗長ではない。
-      # また flake check は**出力そのものが消えたこと**は検出できない (何も無ければ
-      # 検査対象が無いだけ)。それは次のステップの required 判定が受け持つ。
+      # **upstream の Nix の flake check は darwinConfigurations を評価しない**
+      # (`checking flake output 'darwinConfigurations'...` と出るが、中身は見ない)。
+      # 存在しない option を書いた構成でも `all checks passed!` で終わることを
+      # 実測した (use-upstream-nix)。flake check が見るのは標準の出力だけである。
+      # **構成を評価するのは次のステップだけ**で、次のステップは冗長ではない。
+      # また flake check は**出力そのものが消えたこと**も検出できない。それも
+      # 次のステップの required 判定が受け持つ。
       - name: nix flake check (評価のみ)
         run: nix flake check --no-build --all-systems
 
@@ -76,8 +75,9 @@ jobs:
           # 赤くなる**。`builtins.getFlake` + `?` 演算子は値を force しないので、
           # 「宣言されているか」だけを意味論的に問える。
           # なお `nix eval '.#' --apply ...` は使えない (`.#` が default package に
-          # 解決される)。`nix flake show --json` の形は実装依存 (Determinate Nix は
-          # inventory で包む) なので採らない。
+          # 解決される)。`nix flake show --json` の形は Nix の実装と版によって違う
+          # (upstream の Nix は標準でない出力を `{"type":"unknown"}` とだけ返す)
+          # ので採らない。
           eval_all() {
             local requirement="$1" output="$2" attr_path="$3" declared names names_json
 
