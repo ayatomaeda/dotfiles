@@ -91,7 +91,7 @@ $ direnv deny                 # 許可を取り消す
 
 delta の画面は `less` なので、`q` で終了、`/` で検索、`n` / `N` で次 / 前の一致。
 
-署名付きコミットが `warning: gpg.ssh.defaultKeyCommand failed: …` で止まったら、原因はその行の
+署名付きコミットが `warning: gpg.ssh.defaultKeyCommand failed: …` で止まったら、原因はそれに続く
 メッセージにある (項目名の不一致、同じ名前の項目が 2 つ、1Password のロック、転送の切断など)。
 続く `user.signingKey needs to be set` に従って `user.signingkey` を設定しない — 名前による選択が
 黙って外れる。読み方は README の「コミット署名」。

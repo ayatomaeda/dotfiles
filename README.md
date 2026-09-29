@@ -344,16 +344,20 @@ apply しても何も起きない** — 書き込みに失敗して、いまの�
 
 git は `user.signingkey` があると `defaultKeyCommand` を使わなくなり、**名前による選択が黙って外れる**。
 
-- 署名の設定を出力する構成で、`programs.git.settings.user.signingkey` (大文字小文字を問わない) や
-  `programs.git.signing.key` を宣言すると、評価に失敗する。
-- **宣言の外にある `user.signingkey` は検出できない。** 手書きの `~/.gitconfig`、リポジトリの
-  `.git/config` (`git config user.signingkey …` で入る) に書かない。
+- 署名の設定を出力する構成で、次のどれかを宣言すると評価に失敗する (大文字小文字を問わない)。
+  - `programs.git.settings.user.signingkey`
+  - `programs.git.signing.key`
+  - `programs.git.includes` の `contents.user.signingkey` (`condition` 付きの `includeIf` を含む)
+- **検出できない `user.signingkey` もある。** 次の場所に書かない。
+  - `programs.git.includes` の `path` で読む既存のファイル
+  - 手書きの `~/.gitconfig`
+  - リポジトリの `.git/config` (`git config user.signingkey …` で入る)
 - git の CLI 以外のクライアント (IDE の組み込みの git など) は `gpg.ssh.defaultKeyCommand` に対応して
   いないことがある。そのクライアントからの署名付きコミットは失敗しうる。
 
 ### エラーの読み方
 
-名前で鍵を選べないとき、コミットは作られず、git は次の 3 行を出す。
+名前で鍵を選べないとき、コミットは作られず、git は次のように出す。
 
 ```
 warning: gpg.ssh.defaultKeyCommand failed: git-ssh-signing-key: agent にその名前の鍵が無い。
@@ -366,10 +370,11 @@ error: user.signingKey needs to be set for ssh signing
 fatal: failed to write commit object
 ```
 
-**原因は 1 行目のメッセージにある。** 2 行目は git が必ず添える文言で、これに従って `user.signingkey` を
-設定してはならない (上の節)。1 行目の理由は次のどれか。
+**原因は `warning:` に続くメッセージにある。** その後の `error: user.signingKey needs to be set` は
+git が必ず添える文言で、これに従って `user.signingkey` を設定してはならない (上の節)。
+`warning:` の行の理由は次のどれか。
 
-| 1 行目の理由 | 確かめること |
+| `warning:` の行の理由 | 確かめること |
 |---|---|
 | agent にその名前の鍵が無い | 項目名と `signingKeyName` の一致。ロック中なら解除する |
 | agent に鍵が 1 本も無いので、その名前の鍵が無い | その Mac の 1Password なら、ロックの解除と SSH agent の設定。転送された agent なら、接続元で転送しているか (`ForwardAgent`) |

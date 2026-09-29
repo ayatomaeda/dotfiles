@@ -217,21 +217,38 @@ in
   };
 
   # 利用側が user.signingkey を宣言すると、git は defaultKeyCommand を使わなくなり、
-  # 名前による選択が黙って外れる。git のキーは大文字小文字を区別せず、home-manager の
-  # programs.git.signing.key は iniContent.user.signingKey に書くので、iniContent の
-  # 属性名を小文字にして比べる。宣言の外 (~/.gitconfig、.git/config) は検出できない。
+  # 名前による選択が黙って外れる。宣言の書き方は次の 3 つの場所に現れる。
+  #   - programs.git.settings.user.signingkey (iniContent に入る)
+  #   - programs.git.signing.key (home-manager が iniContent.user.signingKey に書く)
+  #   - programs.git.includes の contents (別ファイルになり、[include] / [includeIf] で
+  #     読まれるので iniContent には現れない。home-manager の例がまさにこの形)
+  # git のセクション名とキーは大文字小文字を区別しないので、小文字にして比べる。
+  # 検出できないのは、includes の path で読む既存のファイルと、宣言の外
+  # (~/.gitconfig、.git/config)。
   #
   # 署名の設定を出力しないホストでは止めない。そこで利用側が自分の user.signingkey を
   # 使っても、この仕組みを迂回したことにはならない。
-  assertions = lib.optional signing {
-    assertion = !(lib.any (n: lib.toLower n == "signingkey") (
-      lib.attrNames (config.programs.git.iniContent.user or { })
-    ));
-    message = ''
-      dotfiles.git.signingKeyName を与えた構成で user.signingkey が宣言されている。
-      git は user.signingkey があると名前で鍵を選ばなくなるので、
-      programs.git.settings.user.signingkey (大文字小文字を問わない) と
-      programs.git.signing.key の宣言を消す。
-    '';
-  };
+  assertions =
+    let
+      declaresSigningKey =
+        sections:
+        lib.any (
+          section:
+          lib.toLower section == "user"
+          && lib.isAttrs sections.${section}
+          && lib.any (key: lib.toLower key == "signingkey") (lib.attrNames sections.${section})
+        ) (lib.attrNames sections);
+    in
+    lib.optional signing {
+      assertion =
+        !(declaresSigningKey config.programs.git.iniContent)
+        && !(lib.any (include: declaresSigningKey include.contents) config.programs.git.includes);
+      message = ''
+        dotfiles.git.signingKeyName を与えた構成で user.signingkey が宣言されている。
+        git は user.signingkey があると名前で鍵を選ばなくなるので、
+        programs.git.settings.user.signingkey (大文字小文字を問わない)、
+        programs.git.signing.key、programs.git.includes の contents.user.signingkey の
+        宣言を消す。
+      '';
+    };
 }
