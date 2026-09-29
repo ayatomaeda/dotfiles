@@ -13,7 +13,7 @@
   # Nix の設定 (/etc/nix/nix.conf、registry) と daemon は nix-darwin が管理する
   # (use-upstream-nix)。**その Mac の Nix は upstream の Nix であることを前提にする。**
   # Determinate Nix が残っていると、nix-darwin の検査で activation が止まる
-  # (入れ替えの手順は README)。
+  # (入れ替えの手順は、コミット ba5dfb1 の README にある)。
   #
   # flakes はここで有効にする。インストーラも nix.conf に書くが、nix-darwin が
   # nix.conf を置き換えるので、宣言が無いと switch の後に消える。
