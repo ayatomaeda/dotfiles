@@ -117,13 +117,6 @@ dry-run、評価) までを担当する。このリポジトリの変更は、�
     updated」と報告する (`onActivation.upgrade = false` の構成では常に何件か出る)。直す前に
     `brew list --cask --versions <name>` / `mas list` で導入済みかを確かめる。確認のたびに Homebrew を
     更新させないよう `HOMEBREW_NO_AUTO_UPDATE=1` を付ける。
-- **`nix search nixpkgs` は `flake.lock` を見ていない** — Determinate Nix の
-  `extra-nix-path` が FlakeHub の nixpkgs-weekly を指しているため。パッケージの有無は
-  pin 済みの rev に対して評価して確認する。
-
-  ```sh
-  nix eval --raw github:NixOS/nixpkgs/<lock の rev>#legacyPackages.aarch64-darwin.<pkg>.version
-  ```
 - **非公式 tap は `trusted = true` が必要** — Homebrew 6.0.0 以降、信頼していない tap の
   cask は黙ってスキップされる。既存機では導入済みのため症状が出ず、新しいマシンで
   初めて壊れる。
@@ -246,10 +239,10 @@ dry-run、評価) までを担当する。このリポジトリの変更は、�
 - **CI は Homebrew を守らない** — CI は Nix 構成の評価のみ。activation 時にしか起きない
   失敗 (とくに `brew bundle`) は検出できない。
 - **`darwin-rebuild` は呼び出し側の PATH に依存しない** — スクリプトが冒頭で自分の
-  `PATH` を上書きし、`coreutils` / `jq` / `git` / `nix` を store と
-  `/nix/var/nix/profiles/default/bin` から解決する。`sudo` の PATH の扱いは無関係で、
+  `PATH` を上書きし、`coreutils` / `jq` / `git` / `nix` を store から解決する (`nix` は
+  `nix.package`。`/nix/var/nix/profiles/default/bin` はその後ろの予備)。`sudo` の PATH の扱いは無関係で、
   **世代がひとつでもあれば `sudo /run/current-system/sw/bin/darwin-rebuild` が必ず動く**。
-  `darwin-rebuild` が本当に無いのは**世代が 0 個の初回だけ**で、そのときだけ
+  `darwin-rebuild` が本当に無いのは**世代が 0 個の初回だけ** (Nix を入れ直した直後を含む) で、そのときだけ
   `nix build .#darwinConfigurations.<host>.system` → `sudo ./result/sw/bin/darwin-rebuild`
   を使い、終わったら `result` を消す (GC ルートを残さない)。
   `sudo nix run nix-darwin -- switch` は registry 解決で master を取るため `flake.lock` の

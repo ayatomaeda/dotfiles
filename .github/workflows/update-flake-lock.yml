@@ -19,7 +19,6 @@ permissions:
   contents: write
   pull-requests: write
   issues: write # PR へのラベル付与は issues API を経由する
-  id-token: write # determinate-nix-action が FlakeHub と通信するため
 
 jobs:
   update:
@@ -27,13 +26,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
-
       # GitHub App の資格情報が設定されていれば、1 時間で失効しジョブ終了時に revoke
       # される installation token を発行する。未設定ならこのステップはスキップされ、
       # outputs.token が空文字になるので下の `||` が次の候補へ落ちる。
       # actionlint は `client-id` を未定義と誤検知する (内蔵メタデータが古く
       # `app-id` しか知らない)。実際の @v3 では app-id が deprecated で client-id が現行。
+      #
+      # **checkout より前に置く。** checkout は渡した token を git の設定に残し、
+      # 下の push はそれを使う。GITHUB_TOKEN で push すると、その push では
+      # ci.yml が走らない (use-upstream-nix)。
       - uses: actions/create-github-app-token@v3
         id: app-token
         if: vars.FLAKE_LOCK_APP_CLIENT_ID != ''
@@ -43,34 +44,80 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
 
-      - uses: DeterminateSystems/determinate-nix-action@v3
-
-      - uses: DeterminateSystems/update-flake-lock@v29
+      # 認証の優先順位。上から順に、設定されているものが使われる。push と gh の
+      # 両方がこの token を使う。
+      #
+      # 1. GitHub App の installation token (公式ドキュメントが最初に挙げる方法)
+      #    vars.FLAKE_LOCK_APP_CLIENT_ID と secrets.FLAKE_LOCK_APP_PRIVATE_KEY
+      #    を設定すると有効になる。1 時間で失効し、リポジトリ単位・権限単位に
+      #    スコープされ、個人アカウントに紐づかない。
+      # 2. fine-grained PAT (secrets.FLAKE_LOCK_TOKEN)
+      #    contents:write + pull-requests:write が必要。長命で個人に紐づく。
+      # 3. GITHUB_TOKEN (フォールバック)
+      #    ただし既定では **PR の作成自体が拒否される**。これは
+      #    「Preventing GitHub Actions from creating or approving pull requests」
+      #    としてセキュリティ設定に載っている意図的な既定値で、Settings →
+      #    Actions → General から有効化しないと、PR の作成が
+      #    "not permitted to create or approve pull requests" で失敗する。
+      #    有効化しても、GITHUB_TOKEN の push では ci.yml が走らない。
+      #    ci.yml を workflow_dispatch でそのブランチに対して手動で回す。
+      #
+      # 1 か 2 を使えば、この制約を回避できる。
+      - uses: actions/checkout@v5
         with:
-          # 既定のブランチ名 (update_flake_lock_action) を使い回すため、
-          # 前回の PR が未マージのまま次回が走っても PR は積み上がらず、
-          # 同じ PR が更新される (design の「更新 PR の滞留」シナリオ)。
-          pr-title: "chore: nix flake update"
-          pr-labels: |
-            dependencies
-            automated
-          # 認証の優先順位。上から順に、設定されているものが使われる。
-          #
-          # 1. GitHub App の installation token (公式ドキュメントが最初に挙げる方法)
-          #    vars.FLAKE_LOCK_APP_CLIENT_ID と secrets.FLAKE_LOCK_APP_PRIVATE_KEY
-          #    を設定すると有効になる。1 時間で失効し、リポジトリ単位・権限単位に
-          #    スコープされ、個人アカウントに紐づかない。
-          # 2. fine-grained PAT (secrets.FLAKE_LOCK_TOKEN)
-          #    contents:write + pull-requests:write が必要。長命で個人に紐づく。
-          # 3. GITHUB_TOKEN (フォールバック)
-          #    ただし既定では **PR の作成自体が拒否される**。これは
-          #    「Preventing GitHub Actions from creating or approving pull requests」
-          #    としてセキュリティ設定に載っている意図的な既定値で、Settings →
-          #    Actions → General から有効化しないと以下で失敗する:
-          #      GitHub Actions is not permitted to create or approve pull requests
-          #    有効化した場合でも、GITHUB_TOKEN が作成した PR の pull_request
-          #    イベント (opened / synchronize / reopened) は **承認待ち状態** の run に
-          #    なり、write 権限を持つ人の承認が必要になる (run が作られないのではない)。
-          #
-          # 1 か 2 を使えば、この承認プロンプトも作成制限も回避できる。
           token: ${{ steps.app-token.outputs.token || secrets.FLAKE_LOCK_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # NixOS の公式リリースの Nix を入れ、flakes を有効にする (use-upstream-nix)。
+      - uses: cachix/install-nix-action@v31
+
+      # 固定のブランチを使い回すので、前回の PR が未マージのまま次回が走っても
+      # PR は積み上がらず、同じ PR が更新される (design の「更新 PR の滞留」シナリオ)。
+      # ブランチ名は DeterminateSystems/update-flake-lock の既定を引き継いでいる。
+      #
+      # 更新した flake.lock が、開いている PR のブランチのもの (無ければ main のもの)
+      # と同じなら何もしない。上流が動かなかった週に PR を更新しない。
+      #
+      # PR の本文は `nix flake update --commit-lock-file` のコミットの本文
+      # (入力ごとの変更)。nix はこの一覧を標準出力には出さない。
+      # **本文をログに echo しない** (CLAUDE.md のコミットメッセージの注意)。
+      #
+      # ラベル dependencies と automated はリポジトリに作ってある。消すと
+      # `gh pr create` が失敗する。
+      - name: flake.lock を更新して PR を作る
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.FLAKE_LOCK_TOKEN || secrets.GITHUB_TOKEN }}
+          BRANCH: update_flake_lock_action
+        run: |
+          set -euo pipefail
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898232+github-actions[bot]@users.noreply.github.com'
+
+          base=$(git rev-parse HEAD)
+          nix flake update --commit-lock-file
+          if [ "$(git rev-parse HEAD)" = "$base" ]; then
+            echo "flake.lock は main と同じ。何もしない。"
+            exit 0
+          fi
+
+          if git fetch --quiet --depth 1 origin "$BRANCH" 2>/dev/null \
+             && git diff --quiet FETCH_HEAD HEAD -- flake.lock; then
+            echo "flake.lock は ${BRANCH} と同じ。何もしない。"
+            exit 0
+          fi
+
+          git push --force origin "HEAD:refs/heads/${BRANCH}"
+
+          body=$(git log -1 --format=%b)
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --body "$body"
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore: nix flake update" \
+              --body "$body" \
+              --label dependencies \
+              --label automated
+          fi
