@@ -8,4 +8,4 @@
 
 - [x] 2.1 私的な語の検査をこのブランチの成果物とコミットメッセージにかける
 - [x] 2.2 `openspec archive drop-determinate-migration-guide` を実行し、`openspec/specs/system-bootstrap/spec.md` の Purpose から入れ替えの手順への言及を除く
-- [ ] 2.3 PR を作り、CI が通ることを確かめる
+- [x] 2.3 PR を作り、CI が通ることを確かめる
