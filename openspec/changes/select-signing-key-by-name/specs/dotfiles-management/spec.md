@@ -8,7 +8,7 @@ git は署名のたびに agent の鍵の一覧を取り、コメントが名前
 
 次のいずれかでは、署名を中止し、名前とどの場合かが分かるメッセージを出さなければならない (SHALL)。(1) 一致する鍵が無い (agent に鍵が 1 本も無い場合を含む)。(2) 一致する鍵が 2 本以上ある。(3) agent に接続できない。メッセージは、どの agent (その Mac の 1Password か、転送された agent か) を見たかを示し、`user.signingkey` を設定して回避しないよう案内しなければならない (SHALL)。
 
-`dotfiles.git.signingKeyName` と、利用側が直接書いた `user.signingkey` が同時にある構成は、評価に失敗しなければならない (SHALL)。git は `user.signingkey` があると名前による選択を黙って使わなくなるためである。
+署名の設定を出力する構成 (`dotfiles.onePassword.enable` が true で、`dotfiles.git.signingKeyName` が与えられている) で、利用側が git の設定の `user.signingkey` を宣言していれば、書き方 (キーの大文字小文字、home-manager の `programs.git.signing.key` を含む) によらず評価に失敗しなければならない (SHALL)。git は `user.signingkey` があると名前による選択を黙って使わなくなるためである。
 
 鍵を選ぶために、実行時に `op` CLI を使ってはならない (MUST NOT)。`op` はサインインの状態に依存し、ssh 越しでは接続先の 1Password に問い合わせるためである。
 
@@ -44,17 +44,19 @@ git は署名のたびに agent の鍵の一覧を取り、コメントが名前
 #### Scenario: 名前が曖昧
 
 - **WHEN** agent に、コメントが名前と一致する鍵が 2 本以上ある状態で署名付きコミットを行う
-- **THEN** 名前と、一致する鍵が複数あることを示すメッセージが出て、コミットは作られない
+- **THEN** 名前と、一致する鍵が複数あることと、見た agent を示すメッセージが出て、コミットは作られない
 - **AND** どちらの鍵でも署名されない
+- **AND** メッセージは `user.signingkey` を設定しないよう案内する
 
 #### Scenario: agent に接続できない
 
 - **WHEN** 手元で 1Password が起動しておらず、agent のソケットに接続できない状態で署名付きコミットを行う
 - **THEN** 名前と、その Mac の 1Password の agent に接続できないことを示すメッセージが出て、コミットは作られない
+- **AND** メッセージは `user.signingkey` を設定しないよう案内する
 
 #### Scenario: user.signingkey との併用
 
-- **WHEN** 利用側が `dotfiles.git.signingKeyName` を与え、`programs.git.settings.user.signingkey` も書いて構成を評価する
+- **WHEN** 利用側が `dotfiles.git.signingKeyName` を与え、`programs.git.settings.user.signingKey` (大文字小文字は問わない) または `programs.git.signing.key` も宣言して構成を評価する
 - **THEN** 評価は失敗し、`user.signingkey` を消すよう案内するメッセージが出る
 
 #### Scenario: 名前を与えない利用側
@@ -84,7 +86,7 @@ git は署名のたびに agent の鍵の一覧を取り、コメントが名前
 
 このリポジトリは公開されている。システムは、環境固有の値 (ユーザー名、git の identity、署名鍵とそれを指す名前、ssh の接続先、特定の環境でだけ使うパッケージ) を持ってはならない (MUST NOT)。値は利用側が与える。
 
-また、利用側の私的な情報 (ホスト名、ドメイン、アドレス、ネットワークやクラスタの構成) を、コード、コメント、コミットメッセージ、ブランチ名、PR と issue の文章のいずれにも書いてはならない (MUST NOT)。実測の記録は、役割の名前 (接続元の Mac、接続先の Mac、所有者の端末) で書かなければならない (SHALL)。
+また、利用側の私的な情報 (ホスト名、ドメイン、アドレス、ネットワークやクラスタの構成) を、コード、コメント、コミットメッセージ、ブランチ名、PR と issue の文章、OpenSpec の成果物 (proposal / design / specs / tasks。archive したものを含む) のいずれにも書いてはならない (MUST NOT)。実測の記録は、役割の名前 (接続元の Mac、接続先の Mac、所有者の端末) で書かなければならない (SHALL)。
 
 core のモジュールが利用側の宣言に頼る場合は、その前提を利用側が与えるものとして文書に書かなければならない (SHALL)。
 

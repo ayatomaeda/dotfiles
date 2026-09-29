@@ -36,6 +36,7 @@ git 2.55.0 での実測 (使い捨ての鍵と一時的な agent):
 - **シェルを通さずに実行される** (`false || echo …` は失敗し、`$HOME` は展開されない)。
 - `ssh-keygen -Y sign -f <公開鍵>` は秘密鍵のファイルが無くても agent の鍵で署名できる (今のラッパーの経路が成り立つ)。
 - `ssh-add -L` の終了コードは、鍵が無いとき 1 (標準出力に `The agent has no identities.`)、agent に接続できないとき 2。
+  agent との通信に失敗したとき (`error fetching identities: …` を標準エラーに出す) も 1 になる (OpenSSH の実装)。
 
 ## Goals / Non-Goals
 
@@ -75,10 +76,10 @@ git 2.55.0 での実測 (使い捨ての鍵と一時的な agent):
 |---|---|
 | 一致がちょうど 1 本 | `key::<種類> <本体>` を 1 行出して 0 で終わる (コメントは出さない) |
 | 一致が 0 本 (鍵はあるが名前が違う) | 「`<見た agent>` に `<名前>` という名前の鍵が無い」と出して非 0 |
-| agent に鍵が 1 本も無い (終了コード 1) | 一致 0 本と同じ扱い。見た agent がその Mac の 1Password なら「ロックの解除と、SSH agent の設定を確かめる」、転送された agent なら「接続元で agent を転送しているか」を添える。標準出力の案内文を鍵の行として解釈しない |
+| agent に鍵が 1 本も無い (終了コード 1 で、標準出力がちょうど `The agent has no identities.`) | 一致 0 本と同じ扱い。見た agent がその Mac の 1Password なら「ロックの解除と、SSH agent の設定を確かめる」、転送された agent なら「接続元で agent を転送しているか」を添える。案内文を鍵の行として解釈しない |
 | 一致が 2 本以上 | 「`<見た agent>` に `<名前>` という名前の鍵が複数ある」と出して非 0。どちらでも署名しない |
 | agent に接続できない (終了コード 2) | その Mac の 1Password なら「1Password が起動しているか」、転送された agent なら「転送の接続が切れていないか」を添えて非 0 |
-| それ以外の終了コード | 終了コードを含む汎用のメッセージで非 0 |
+| それ以外 (終了コード 1 で上に当たらないもの、その他の終了コード) | 終了コードと `ssh-add` の標準エラーを含む汎用のメッセージで非 0 |
 
 - 「見た agent」は、D3 の判定の結果 (その Mac の 1Password か、転送された agent か) をそのまま使う。
 - 失敗のメッセージには、どの場合も「`user.signingkey` を設定しないこと」を添える。git が最後に
@@ -89,8 +90,13 @@ git 2.55.0 での実測 (使い捨ての鍵と一時的な agent):
   かけてスクリプトの本文に埋め込み、`defaultKeyCommand` にはスクリプトの store パスだけを書く。`$HOME` の展開は
   スクリプトの中で行う。
 - 名前の型は `nullOr nonEmptyStr` にする。空文字列はコメントの無い鍵に一致しかねない。
-- 利用側が `programs.git.settings.user.signingkey` を直接書くと、git は `defaultKeyCommand` を使わなくなり、名前による
-  選択が黙って外れる。`signingKeyName != null` のときに `user.signingkey` があれば、assertion で評価を止める。
+- 利用側が `user.signingkey` を宣言すると、git は `defaultKeyCommand` を使わなくなり、名前による選択が黙って外れる。
+  宣言の書き方は `programs.git.settings.user.signingkey` のほかに、大文字小文字の違う `signingKey` (git のキーは大文字小文字を
+  区別しない) や、home-manager の `programs.git.signing.key` (`iniContent.user.signingKey` に書き込む) がある。そこで
+  assertion は `config.programs.git.iniContent.user` の属性名を小文字にして `signingkey` と比べる。
+  assertion は署名の設定を出力するとき (`onePassword.enable && signingKeyName != null`) にだけ効かせる。署名の設定を
+  出力しないホストでは、利用側が自分の `user.signingkey` を使ってもこの仕組みを迂回したことにならないため。
+- 宣言の外 (`~/.gitconfig` の手書き、リポジトリの `.git/config`) の `user.signingkey` は検出できない。README に書く。
 
 ### D3. agent の判定を 1 つにまとめ、ラッパーと鍵を取るコマンドが共有する
 
@@ -106,8 +112,8 @@ keyCommand  : isForwarded → "$SSH_AUTH_SOCK" / それ以外 → 1Password の 
 
 判定の文字列は Nix の let で 1 つにし、2 つのスクリプトへ埋め込む。ラッパーの中身は今と同じ文字列になるように書き、
 store パスが変わらないことを照合で確かめる。ssh.nix の `Match` は否定形で引用の文脈も違うので、今と同じく別に書く。
-判定の条件そのものを持つのは今と同じく ssh.nix と git.nix の 2 か所で、固定パス (`~/.ssh/agent-forward.sock`) を持つのは
-`ssh/rc` と terminal.nix である。鍵を取るコマンドは git.nix の中の判定を使うので、そろえる場所は増えない。
+判定の条件と固定パス (`~/.ssh/agent-forward.sock`) をそろえる場所は、今と同じ 4 か所 (ssh.nix の `Match`、git.nix の判定、
+`ssh/rc`、terminal.nix) である。鍵を取るコマンドは git.nix の中の判定を使うので、そろえる場所は増えない。
 
 ### D4. 1Password 固有のパスは、値だけを持つ 1 つの .nix ファイルに置く
 
@@ -126,7 +132,10 @@ ssh.nix は `"~/${agentSocket}"`、鍵を取るコマンドは `"$HOME/${agentSo
 ラッパーの文字列は変えない。
 
 これは既存の要件 (`dotfiles-management` の「プラットフォーム固有の外部パスを無条件な事実として書かない」) を変えずに満たす。
-パスは option にならず、生成物に現れるのは gate の内側で使った分だけである。
+その要件の「gate された 1 か所に閉じる」は、**値を定義するのは 1 か所で、それを使うのは gate の内側だけ**と読む。
+`one-password.nix` は gate の外で読み込まれるが、値を定義するだけで何も出力しない。パスは option にならず、生成物に
+現れるのは gate の内側で使った分だけである。`onePassword.enable = false` の構成の生成物に 1Password のパスと
+`/usr/bin/ssh-add` が無いことを確かめる (tasks 4.4)。
 
 internal の option で渡す案は採らない。`multi-host-configuration` の internal の例外は「モジュールが導出した値」の
 受け渡しのためのもので、定数のパスは当たらない。`ssh -G` で `IdentityAgent` を読めば判定もパスも ssh.nix だけで済むが、
@@ -153,12 +162,16 @@ internal の option で渡す案は採らない。`multi-host-configuration` の
 - [git のエラーの最後の行が誤解を招く] → D2 のメッセージで `user.signingkey` を設定しないよう添え、README の
   「エラーの読み方」に 3 行をそのまま載せる。
 - [転送された agent がコメントを返さない] → agent の一覧の応答はコメントを含み、転送はそれをそのまま中継するので返るはず。
-  利用側の実機で、ssh 越しと herdr のペインで確かめる。
+  archive の前に tasks 4.7 で確かめる。
 - [git の CLI 以外のクライアント (IDE の組み込み git など) は `defaultKeyCommand` に対応しないことがある] → README に書く。
 - [Claude Code の sandbox を将来有効にする] → 鍵を取るコマンドは 1Password のソケットに直接つなぐ。今は通るが (実測)、
   sandbox の設定しだいで塞がれうる。そのときはエージェントのコミットだけが失敗する。
 - [Claude Code のシェルなど、古い環境のプロセス] → 判定は今のラッパーと同じなので、既知の制約 (起動し直す) は変わらない。
 - [署名のたびに `ssh-add -L` を実行する] → 一覧を取るだけで承認は出ない。所要時間を実測して記録する。
+- [応答しない agent (スリープした接続元への転送など)] → `ssh-add -L` が返らず、署名が止まる。今のラッパーの署名と同じ
+  制約で、sshd の `ClientAliveInterval` が転送を切るまで続く。
+- [転送された agent がコメントを返すことを、archive の前に確かめる] → 利用側で switch する前に、build したスクリプトを
+  接続先の Mac に置き、ssh 越しと herdr のペインで直接実行して確かめる (tasks 4.7)。
 
 ## Migration Plan
 

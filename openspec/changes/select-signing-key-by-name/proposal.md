@@ -31,7 +31,7 @@ core を使う利用側はどれも 1Password を使う前提なので、公開�
 
 ### Modified Capabilities
 
-- `dotfiles-management`: 署名鍵を利用側の名前で agent から選ぶ要件を足す。環境固有の値の列挙に「鍵を指す名前」を含める。
+- `dotfiles-management`: 署名鍵を利用側の名前で agent から選ぶ要件を足す。「環境固有の値と私的な情報を書かない」の列挙に「鍵を指す名前」を含め、私的な情報を書いてはならない場所に OpenSpec の成果物を加える (change をこのリポジトリに置くようにするため)。
 - `remote-access`: 転送された agent を使うかの判定を、署名鍵を選ぶコマンドにも適用する。
 - `multi-host-configuration`: 環境固有の値の列挙と「モジュールが読む値」の例を、署名鍵の名前に改める。
 
