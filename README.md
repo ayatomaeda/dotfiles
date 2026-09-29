@@ -104,7 +104,7 @@ core のモジュールが正しく動くために、利用側の宣言に頼っ
 | core の前提 | 利用側が与えるもの |
 |---|---|
 | `darwinModules.default` が `home-manager.*` を設定する | home-manager の darwin モジュールの読み込み |
-| Nix の設定と daemon を nix-darwin が管理する | その Mac に **upstream の Nix** が入っていること。Determinate Nix が残っていると activation が止まる (入れ替えの手順は、コミット `ba5dfb1` の README にある) |
+| Nix の設定と daemon を nix-darwin が管理する | その Mac に **upstream の Nix** が入っていること。Determinate Nix が残っていると activation が止まる (入れ替えの手順は、コミット `ba5dfb1` の README の [「Determinate Nix から upstream の Nix への入れ替え」](https://github.com/ayatomaeda/dotfiles/blob/ba5dfb1/README.md#determinate-nix-から-upstream-の-nix-への入れ替え)) |
 | Ghostty の設定 (`package = null`、`font-family`) | Ghostty 本体と 2 つのフォント。core の Homebrew のリストにあるが、効くのは `homebrew.enable = true` のときだけ |
 | 1Password の SSH agent と `op-ssh-sign` | 1Password のアプリ (同上) と、その SSH agent の有効化 |
 | 署名鍵を項目名で選ぶ (`dotfiles.git.signingKeyName`) | 署名する Mac と、ssh の接続元のどれの 1Password にも、その名前の SSH Key の項目が**ちょうど 1 つ**あり、SSH agent がその鍵を出していること |
