@@ -5,8 +5,13 @@ macOS (Apple Silicon) の環境を Nix flake + nix-darwin + home-manager で宣�
 flake の input として取り込み、ホストの構成と環境固有の値を与える。使い方は `README.md`、
 日々の操作は `docs/GUIDE.md`、要件は `openspec/specs/` を参照。
 
-コメントの括弧内にある change の名前 (`remote-agent-forwarding` など) は、所有者の非公開の
-設計記録を指す。経緯はこのリポジトリには無く、現在の要件だけが `openspec/specs/` にある。
+コメントの括弧内にある change の名前のうち、`openspec/changes/` (archive を含む) に無いもの
+(`remote-agent-forwarding` など) は、所有者の非公開の設計記録を指す。その経緯はこのリポジトリには無く、
+現在の要件だけが `openspec/specs/` にある。
+
+**以後の変更は、OpenSpec の change としてこのリポジトリに置く** (`select-signing-key-by-name` から)。
+成果物 (proposal / design / specs / tasks。archive したものを含む) も公開されるので、下の決まりに
+従って利用側の私的な情報を書かない。実測は役割の名前で書く。
 
 ## public のリポジトリとしての決まり
 
@@ -15,7 +20,7 @@ flake の input として取り込み、ホストの構成と環境固有の値�
 - **値は利用側が与える。** ユーザー名、git の identity、署名鍵、ssh の接続先、`stateVersion`、
   特定の環境でだけ使うパッケージは、利用側が home-manager / nix-darwin の標準の option に直接書く。
 - **固有名を書かない。** ホスト名、ドメイン、アドレス、利用側のネットワークやクラスタの構成を、
-  コード、コメント、コミットメッセージ、ブランチ名、PR と issue の文章のどこにも書かない。
+  コード、コメント、コミットメッセージ、ブランチ名、PR と issue の文章、OpenSpec の成果物のどこにも書かない。
   実測の記録は、役割の名前 (接続元の Mac、接続先の Mac、所有者の端末) で書く。
 - 所有者の家の端末には、public への push とエージェントの `gh` の書き込みを止める検査がある。
   **それ以外の端末と GitHub の画面からの公開は、後から見つかるだけで止まらない。**
@@ -41,7 +46,11 @@ claude/            Claude Code のステータスラインのスクリプト
   core が読まない値 (git の identity、ssh の接続先など) は option にせず、利用側が標準の option に
   直接書く (モジュールシステムがマージする)。
   現在の option は `onePassword.enable` (既定値を `hostPlatform` から導出) と
-  `git.signingKey` (利用側が与える) の 2 つ。
+  `git.signingKeyName` (1Password の項目名。利用側が与える) の 2 つ。廃止した `git.signingKey`
+  は `mkRemovedOptionModule` で移行先を示して止める。
+  1Password 固有のパス (agent のソケット、`op-ssh-sign`) は `modules/common/one-password.nix`
+  (値だけのファイル。`imports` に入れない) にあり、`ssh.nix` と `git.nix` が `import` して
+  gate の内側でだけ使う。定数なので option にしない。
   モジュール間の受け渡しに使うものは `internal = true` を付けて設定項目と区別する。
 - **リストに置いたものは、すべての利用側に入る。** `home.packages` と Homebrew のリストは
   利用側で引けない。どの環境でも使うものだけを置く。
@@ -151,13 +160,15 @@ dry-run、評価) までを担当する。このリポジトリの変更は、�
   - **ソケットの実在も見る。** tmux は detach で環境を戻さないので、ssh で attach して
     切断した後、接続先の Mac の前のペインに古い `SSH_CONNECTION` が残る。`SSH_CONNECTION` だけで
     判定すると、ローカルの git の操作と署名が消えたソケットを見て失敗する。条件は
-    `ssh.nix` の 1Password の `Match` と `git.nix` の署名ラッパーの 2 か所にあり、そろえておく。
+    `ssh.nix` の 1Password の `Match` と `git.nix` の `isForwarded` の 2 か所にあり、そろえておく。
+    `isForwarded` は 1 つの文字列で、署名のラッパーと署名鍵を選ぶコマンド
+    (`gpg.ssh.defaultKeyCommand`) の両方に埋め込まれる。
   - `Match exec` の変数は引用符で囲む。`$SHELL` が sh / bash だと値が分割され、
     ssh のたびに `test: too many arguments` が出る。
   - **herdr のペインは固定パスで判定する** (`herdr-remote-machines`)。herdr のサーバーは起動時の
     `SSH_AUTH_SOCK` を持ち続けて再接続で更新しないので、ペインでは `~/.ssh/agent-forward.sock` を
     使い、`ssh/rc` がログインのたびに先を張り替える。条件は `ssh.nix`・`git.nix` の
-    署名ラッパー・`ssh/rc`・`terminal.nix` の 4 か所にまたがる。パスを変えるときは全部そろえる。
+    `isForwarded`・`ssh/rc`・`terminal.nix` の 4 か所にまたがる。パスを変えるときは全部そろえる。
   - **`ssh/rc` は何も出力してはならない。** 標準出力は接続の出力に混ざり、herdr の中継、
     `ssh host 'git …'`、`scp` を壊す。**先が生きているリンクを張り替えてはならない** —
     `ControlPersist 10s` の短い接続がリンクを奪い、10 秒後に先が消える。

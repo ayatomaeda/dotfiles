@@ -308,7 +308,7 @@
   # 公式ドキュメントに載っている変数) では、SSH_AUTH_SOCK を固定パス
   # ~/.ssh/agent-forward.sock にする (上の initContent)。先はログインのたびに ssh/rc が
   # 張り替える。ペインで起動した Claude Code もこの値を引き継ぐ。
-  # 判定の条件は ssh.nix の 1Password の Match と git.nix の署名ラッパーにある。
+  # 判定の条件は ssh.nix の 1Password の Match と git.nix の isForwarded にある。
   # 既知の制約: 接続元からの接続が残ったまま接続先の Mac の前で herdr のペインを使うと、
   # 承認は接続元に出る。接続先の前で使う前に、接続元の herdr を終了する (README)。
   #

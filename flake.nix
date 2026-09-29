@@ -57,6 +57,8 @@
                 name = "Example";
                 email = "example@example.com";
               };
+              # 1Password の項目名 (架空)。署名の分岐 (git.nix) を CI で評価させる。
+              dotfiles.git.signingKeyName = "Example signing key";
             };
           }
         ];

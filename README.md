@@ -68,7 +68,7 @@ flake の input として取り込み、ホストの構成と環境固有の値 
   system.primaryUser = "<user>";
   users.users.<user> = {
     home = "/Users/<user>";
-    openssh.authorizedKeys.keyFiles = [ ./keys/id_ed25519.pub ];
+    openssh.authorizedKeys.keyFiles = [ ./keys/id_ed25519.pub ];   # ログインを許す鍵。git の署名とは独立
   };
   system.stateVersion = 6;
   homebrew = { enable = true; onActivation = { /* 方針は利用側が決める */ }; casks = [ /* その環境でだけ使うもの */ ]; };
@@ -77,7 +77,7 @@ flake の input として取り込み、ホストの構成と環境固有の値 
     imports = [ core.homeModules.default ];
     home.stateVersion = "25.05";
     programs.git.settings.user = { name = "<name>"; email = "<email>"; };
-    dotfiles.git.signingKey = builtins.readFile ./keys/id_ed25519.pub;   # 署名しないなら与えない
+    dotfiles.git.signingKeyName = "<項目名>";   # 署名に使う鍵の 1Password の項目名。署名しないなら与えない
     programs.ssh.settings.<host> = { HostName = "…"; };
     home.packages = [ /* その環境でだけ使う CLI ツール */ ];
   };
@@ -92,7 +92,10 @@ core が**読む**値だけを option にしている (`modules/common/options.n
 | option | 既定 | 意味 |
 |---|---|---|
 | `dotfiles.onePassword.enable` | macOS では `true` | 1Password の SSH agent を ssh の認証と git の署名に使う |
-| `dotfiles.git.signingKey` | `null` | 署名に使う公開鍵。`null` なら署名の設定を出力しない |
+| `dotfiles.git.signingKeyName` | `null` | 署名に使う鍵の、1Password の項目名 (下の「コミット署名」)。`null` なら署名の設定を出力しない。空文字列は受け付けない |
+
+`dotfiles.git.signingKey` (公開鍵の文字列) は廃止した。与えた構成は、`signingKeyName` へ移すよう
+案内するメッセージで評価に失敗する。
 
 ### 利用側が与えるもの
 
@@ -103,6 +106,7 @@ core のモジュールが正しく動くために、利用側の宣言に頼っ
 | `darwinModules.default` が `home-manager.*` を設定する | home-manager の darwin モジュールの読み込み |
 | Ghostty の設定 (`package = null`、`font-family`) | Ghostty 本体と 2 つのフォント。core の Homebrew のリストにあるが、効くのは `homebrew.enable = true` のときだけ |
 | 1Password の SSH agent と `op-ssh-sign` | 1Password のアプリ (同上) と、その SSH agent の有効化 |
+| 署名鍵を項目名で選ぶ (`dotfiles.git.signingKeyName`) | 署名する Mac と、ssh の接続元のどれの 1Password にも、その名前の SSH Key の項目が**ちょうど 1 つ**あり、SSH agent がその鍵を出していること |
 | `ssh/rc` は、生きているリンクの先が所有者の端末の agent であることを前提に張り替える | **agent を転送する先は、所有者の端末に限る** (`programs.ssh.settings.<host>.ForwardAgent`)。core は転送を有効にしない |
 
 ### リストに置いたものは、すべての利用側に入る
@@ -305,6 +309,88 @@ Ghostty を許可する。
 テーマ `tokyo-night`、通知)。switch すると herdr のサーバーが設定を読み直す。**設定画面 (`prefix+s`) で
 apply しても何も起きない** — 書き込みに失敗して、いまのセッションにも反映されない (実測)。
 
+## コミット署名
+
+`dotfiles.git.signingKeyName` を与えると、git のコミットに 1Password の SSH 鍵で署名する
+(`modules/common/git.nix`)。利用側が書くのは**鍵を指す名前 (1Password の項目名) だけ**で、公開鍵の
+写しは置かない。
+
+- 1Password の SSH agent は、項目名を鍵のコメントとして返す。git は署名のたびに
+  `gpg.ssh.defaultKeyCommand` で agent の鍵の一覧 (`ssh-add -L`) を取り、コメントが名前と
+  **完全に一致する鍵がちょうど 1 本**のときだけ、それで署名する。agent の鍵は何本あってもよく、
+  並び順にもよらない。部分一致・前方一致では選ばない。
+- 一覧を取るだけなので、1Password の承認は出ない (ロック中も出ない)。承認は署名のときに出る。
+  所要時間は 1 回 0.1 秒以下 (最初の 1 回は 0.5 秒ほど)。
+- 見る agent は、署名と同じ判定で選ぶ。手元ではその Mac の 1Password、ssh 越しと herdr のペインでは
+  転送された agent (下の「入った先での git の操作と署名」)。
+- `op` CLI は使わない。サインインの状態に依存し、ssh 越しでは接続先の 1Password に問い合わせるため。
+
+### 項目名の決め方と、変えるとき
+
+- 項目名はそのまま `signingKeyName` の値になる。環境ごとの名前なので、core ではなく利用側に書く。
+- **項目名を変えたら `signingKeyName` も直す。** 直すまで署名は止まる (別の鍵で黙って署名することはない)。
+- **同じ名前の項目を 2 つ作らない。** 一致が 2 本になると署名は止まる。鍵を入れ替えるときは、
+  旧い項目の名前を先に変えてから新しい項目を作る。
+- **確かめるときは 1Password のロックを解除する。** ロック中の agent は、解除していた間に覚えた一覧を
+  返すので、ロック中に足した鍵や変えた名前は解除するまで反映されない。
+- 選ばれる鍵は、手元で次のように確かめられる。
+
+  ```sh
+  $ SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ssh-add -L
+  ssh-ed25519 AAAA… <項目名>
+  ```
+
+### `user.signingkey` を書かない
+
+git は `user.signingkey` があると `defaultKeyCommand` を使わなくなり、**名前による選択が黙って外れる**。
+
+- 署名の設定を出力する構成で、次のどれかを宣言すると評価に失敗する (大文字小文字を問わない)。
+  - `programs.git.settings.user.signingkey`
+  - `programs.git.signing.key`
+  - `programs.git.includes` の `contents.user.signingkey` (`condition` 付きの `includeIf` を含む)
+- **検出できない `user.signingkey` もある。** 次の場所に書かない。
+  - `programs.git.includes` の `path` で読む既存のファイル
+  - 手書きの `~/.gitconfig`
+  - リポジトリの `.git/config` (`git config user.signingkey …` で入る)
+- git の CLI 以外のクライアント (IDE の組み込みの git など) は `gpg.ssh.defaultKeyCommand` に対応して
+  いないことがある。そのクライアントからの署名付きコミットは失敗しうる。
+
+### エラーの読み方
+
+名前で鍵を選べないとき、コミットは作られず、git は次のように出す。
+
+```
+warning: gpg.ssh.defaultKeyCommand failed: git-ssh-signing-key: agent にその名前の鍵が無い。
+  名前: <項目名>
+  見た agent: この Mac の 1Password の agent (/Users/<user>/Library/Group Containers/…/agent.sock)
+  1Password の項目名と dotfiles.git.signingKeyName が一致しているかを確かめる (ロック中は解除前の一覧が返る)。
+  user.signingkey を設定して回避しないこと (名前による鍵の選択が黙って外れる)。
+
+error: user.signingKey needs to be set for ssh signing
+fatal: failed to write commit object
+```
+
+**原因は `warning:` に続くメッセージにある。** その後の `error: user.signingKey needs to be set` は
+git が必ず添える文言で、これに従って `user.signingkey` を設定してはならない (上の節)。
+`warning:` の行の理由は次のどれか。
+
+| `warning:` の行の理由 | 確かめること |
+|---|---|
+| agent にその名前の鍵が無い | 項目名と `signingKeyName` の一致。ロック中なら解除する |
+| agent に鍵が 1 本も無いので、その名前の鍵が無い | その Mac の 1Password なら、ロックの解除と SSH agent の設定。転送された agent なら、接続元で転送しているか (`ForwardAgent`) |
+| agent にその名前の鍵が N 本ある | 同じ名前の項目を 1 つにする |
+| agent に接続できない | その Mac の 1Password なら、1Password が起動しているか。転送された agent なら、転送の接続が切れていないか |
+| ssh-add -L が終了コード N で失敗した | 添えられた `ssh-add` のエラー |
+
+「見た agent」で、その Mac の 1Password と転送された agent のどちらを見たかが分かる。
+
+### 移行 (`signingKey` から)
+
+core の lock の更新と、`dotfiles.git.signingKey = …` を `dotfiles.git.signingKeyName = "<項目名>";` に
+書き換えることを、利用側の**同じコミット**で行う。分けると、lock だけ上がった状態が評価エラーになる
+(lock を自動で更新する仕組みの PR も、同じ理由で評価に落ちる)。公開鍵のファイルを authorized keys にも
+使っているなら、そちらは残す。
+
 ## SSH
 
 ### sshd は公開鍵認証だけ
@@ -333,7 +419,8 @@ authenticationmethods publickey
 
 - 転送された agent を使うのは、次のどちらかのとき。そのときは 1Password の `Match` ブロック
   (`modules/common/ssh.nix`) の `IdentityAgent` が適用されず、署名は `ssh-keygen` が行う
-  (`modules/common/git.nix`)。TTY なしの実行 (`ssh <host> 'git -C … fetch'`) でも同じ。
+  (`modules/common/git.nix`)。署名鍵も、転送された agent の一覧から名前で選ぶ (上の「コミット署名」)。
+  TTY なしの実行 (`ssh <host> 'git -C … fetch'`) でも同じ。
   - `SSH_CONNECTION` があり、`SSH_AUTH_SOCK` のソケットが実在する (ssh 越しのシェル。tmux は detach で
     環境を戻さないので、切断後の古い値はソケットの有無で見分ける)
   - `SSH_AUTH_SOCK` が `~/.ssh/agent-forward.sock` で、その先が実在する (herdr のペイン。上の herdr の節)
