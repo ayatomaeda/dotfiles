@@ -21,7 +21,7 @@
 ## 4. 文書
 
 - [ ] 4.1 README / `docs/GUIDE.md` に Python の節を足す: 置いてある版の決まり方、`.python-version` は置いてある版だけをマイナー版で書くこと (書かない版は Homebrew や macOS の Python に黙って落ちうること)、宣言していない版はプロジェクトの devShell で渡すこと (エージェントからは `direnv exec .`)、nixpkgs の既定が上がって置く版が入れ替わった後は影響を受ける `.venv` を `uv sync` で作り直すこと、CLI は `uvx`、使い捨てのスクリプトは PEP 723 と `uv run --script`
-- [ ] 4.2 CLAUDE.md の構造の一覧に `python` を足す。「踏むと痛い箇所」に次の 2 つを足す
+- [ ] 4.2 CLAUDE.md の構造の一覧に `python` を足す。「踏むと痛い箇所」に次の 3 つを足す
   - `UV_NO_CONFIG` は `.python-version` も無効にすること
   - `only-system` の uv は Homebrew の Python と `/usr/bin/python3` も候補に数えること (宣言していない版を求めると黙って使う)
   - nixpkgs の既定が上がって置く版が入れ替わった後は、`.venv` を作り直す必要があること
