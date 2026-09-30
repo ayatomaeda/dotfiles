@@ -63,8 +63,9 @@ nixpkgs の Python で確かめたこと (pin 済みの rev `a32edd7`、aarch64-
 - uv の `pyvenv.cfg` の `home` と `.venv/bin/python` は、**PATH 上で見つけた場所** (symlink) を指し、
   store のパスへは解決されない。本番の構成では `/etc/profiles/per-user/<user>/bin` になる。
 - その symlink の先を別の store パス (nixos-25.05 の 3.13.5) に差し替えると、既存の venv はそのまま
-  新しいインタープリタで動き、入っていた numpy も import できた。→ **nixpkgs の更新で venv は追随し、
-  GC でも壊れない**。uv のマイナー版のリンクが担う役割を、Nix のプロファイルが担う形になる。
+  新しいインタープリタで動き、入っていた numpy も import できた。→ **nixpkgs のパッチ版の更新で venv は
+  追随し、GC でも壊れない**。uv のマイナー版のリンクが担う役割を、Nix のプロファイルが担う形になる。
+  マイナー版が入れ替わる更新は別で、Risks に書く。
 - numpy の wheel は、nixpkgs の Python で入って動いた。
 
 ### D2. 置く版は「nixpkgs の既定の `python3` と、その 1 つ前のマイナー版」
@@ -119,12 +120,22 @@ devenv は `UV_PYTHON` を設定していたが、`uv pip install` が store の
 
 ## Risks / Trade-offs
 
-- [Homebrew の Python が抜け穴になる] `only-system` の uv は Homebrew の Python も system として見る。
-  宣言していない版をプロジェクトが求め、それを Homebrew が持っていると、黙ってそれを使う。uv には特定の
-  パスを除外する設定が無い。宣言した版については、PATH で `/etc/profiles/…/bin` が `/opt/homebrew/bin`
-  より先にあるので、Nix が勝つ。
-  → `.python-version` には置いてある版だけを書く、と文書に書く。検証の手順に `uv python find` の
-  解決先を確かめる項目を入れる。
+- [Nix 以外の system Python が抜け穴になる] `only-system` の uv は、Homebrew の Python と
+  macOS の `/usr/bin/python3` (3.9) も system として見る。宣言していない版をプロジェクトが求め、それを
+  Nix 以外が持っていると、エラーにならずに黙ってそれを使う (例: `.python-version` が `3.9` なら Apple の
+  Python)。uv には特定のパスを除外する設定が無い。宣言した版については、PATH で `/etc/profiles/…/bin`
+  が `/opt/homebrew/bin` と `/usr/bin` より先にあるので、Nix が勝つ。
+  → 「宣言していない版はエラーで止まる」は、どの system Python も持たない版に限って成り立つ。spec は
+  この範囲でだけ約束し、抜け穴を明記する。`.python-version` には置いてある版だけを書く、と文書に書く。
+  検証の手順に `uv python find` の解決先を確かめる項目を入れる。
+- [マイナー版が入れ替わると venv が壊れる] D1 の「venv は追随し、GC でも壊れない」はパッチ版の更新に
+  限る (実測もパッチ版の差し替えだけ)。nixpkgs が既定を上げると、D2 により置く 2 つの版が入れ替わり、
+  古い方のマイナー版 (例: `python3.13`) がプロファイルから消える。それを指す `.venv` はリンク切れになる。
+  汎用の名前 (`python3`) を指す `.venv` はもっと悪く、別のマイナー版に黙って切り替わり、
+  `lib/python3.<旧>/site-packages` と合わなくなる (パッケージが見えない、C 拡張の ABI が合わない)。
+  → マイナー版が入れ替わる lock の更新は年に 1 回程度。その後に影響を受ける `.venv` を `uv sync` で
+  作り直す手順を文書に書く。`.python-version` をマイナー版で書いておけば、venv は `python3.<minor>` を
+  指し、汎用の名前を指す場合より壊れ方が分かりやすい (起動しない)。
 - [パッチ版は nixpkgs の rev に 1 つ] 特定のパッチ版を使い分けられない。
   → 要件が出たら、そのプロジェクトの devShell で nixpkgs-python などを使う。
 - [switch で venv の Python が黙ってパッチ版を上げる] D1 の追随の裏返し。パッチ版は ABI が同じで、

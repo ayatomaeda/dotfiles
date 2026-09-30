@@ -20,18 +20,20 @@
 
 ## 4. 文書
 
-- [ ] 4.1 README / `docs/GUIDE.md` に Python の節を足す: 置いてある版の決まり方、`.python-version` はマイナー版で書くこと、宣言していない版はプロジェクトの devShell で渡すこと (エージェントからは `direnv exec .`)、CLI は `uvx`、使い捨てのスクリプトは PEP 723 と `uv run --script`
+- [ ] 4.1 README / `docs/GUIDE.md` に Python の節を足す: 置いてある版の決まり方、`.python-version` は置いてある版だけをマイナー版で書くこと (書かない版は Homebrew や macOS の Python に黙って落ちうること)、宣言していない版はプロジェクトの devShell で渡すこと (エージェントからは `direnv exec .`)、nixpkgs の既定が上がって置く版が入れ替わった後は影響を受ける `.venv` を `uv sync` で作り直すこと、CLI は `uvx`、使い捨てのスクリプトは PEP 723 と `uv run --script`
 - [ ] 4.2 CLAUDE.md の構造の一覧に `python` を足す。「踏むと痛い箇所」に次の 2 つを足す
   - `UV_NO_CONFIG` は `.python-version` も無効にすること
-  - `only-system` の uv は Homebrew の Python も候補に数えること (宣言していない版を求めると黙って使う)
+  - `only-system` の uv は Homebrew の Python と `/usr/bin/python3` も候補に数えること (宣言していない版を求めると黙って使う)
+  - nixpkgs の既定が上がって置く版が入れ替わった後は、`.venv` を作り直す必要があること
 - [ ] 4.3 README の direnv の節の「mise を採らない」説明と、今回の方針 (ランタイムの版の情報源は flake) が矛盾しないことを確かめる
 
 ## 5. 適用と移行 (所有者が switch した後)
 
 - [ ] 5.1 1.2 の一覧を所有者に示し、撤去の承認を得る
 - [ ] 5.2 所有者が、利用側で `nix flake update core` を実行し、そのコミットから switch する
-- [ ] 5.3 `python3` / `python3.13` / `python3.14` の解決先が `/etc/profiles/per-user/<user>/bin` であることを確かめる。Claude Code の Bash でも確かめる
+- [ ] 5.3 `python3`、既定の版の `python3.<minor>`、その 1 つ前の版の `python3.<minor>` の解決先が `/etc/profiles/per-user/<user>/bin` であることを確かめる。Claude Code の Bash でも確かめる
 - [ ] 5.4 撤去の前に、`only-system` の下で、uv の管理する Python を指す既存の `.venv` に `uv run` を実行したときの振る舞い (作り直すか、エラーになるか) を 1 つのプロジェクトで確かめ、design の Open Questions に結果を記録する
 - [ ] 5.5 承認済みの対象を `uv python uninstall` で撤去する。各プロジェクトで `uv sync` を実行し、`.venv/bin/python` が `/etc/profiles/per-user/<user>/bin` を指すことを確かめる
 - [ ] 5.6 プロジェクトの中で `uv python find` の解決先が `/opt/homebrew` ではないことを確かめる
-- [ ] 5.7 宣言していない版 (例: `3.12`) を `.python-version` に書いた一時ディレクトリで、`uv sync` がダウンロードせずにエラーで止まることを確かめる
+- [ ] 5.7 宣言しておらず、Nix 以外の system Python も持たない版を選ぶ (`uv python list --only-installed` で、どこにも無いことを先に確かめる)。それを `.python-version` に書いた一時ディレクトリで、`uv sync` がダウンロードせずにエラーで止まることを確かめる
+- [ ] 5.8 抜け穴の確認: `.python-version` を `3.9` にした一時ディレクトリで `uv python find` を実行し、`/usr/bin/python3` が選ばれることを確かめ、文書 (4.1 / 4.2) の記述と一致させる

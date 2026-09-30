@@ -45,10 +45,18 @@ activation の中でインタープリタや Python の CLI をネットワー�
 
 `UV_PYTHON` を設定してはならない (MUST NOT)。`uv pip install` が store の prefix を書き換え対象にするため。
 
-#### Scenario: 宣言していない版を求められたとき
+`only-system` は Nix 以外の system Python (Homebrew の Python、macOS の `/usr/bin/python3`) も候補から外さない。uv には特定のパスを除外する設定が無い。したがってこの構成は、**宣言していない版を求めたときに Nix 以外の Python が選ばれることを防げない**。システムの文書は、この抜け穴と、`.python-version` には宣言した版だけを書くという約束を示さなければならない (SHALL)。
 
-- **WHEN** プロジェクトの `.python-version` が、宣言していない版を指している
+#### Scenario: どこにも無い版を求められたとき
+
+- **WHEN** プロジェクトの `.python-version` が、宣言しておらず、PATH 上のどの system Python も持たない版を指している
 - **THEN** uv はダウンロードせず、インタープリタが見つからないというエラーで止まる
+
+#### Scenario: 宣言していないが Nix の外にある版を求められたとき
+
+- **WHEN** プロジェクトの `.python-version` が、宣言していないが Homebrew または macOS が持つ版 (例: `/usr/bin/python3` の 3.9) を指している
+- **THEN** uv はその Nix の外の Python を使い、エラーにならない
+- **AND** これはこの構成が防がない既知の抜け穴であり、文書の約束で避ける
 
 #### Scenario: uv が選ぶインタープリタ
 
@@ -61,10 +69,17 @@ activation の中でインタープリタや Python の CLI をネットワー�
 - **WHEN** `switch` した後、起動し直していないシェル、または Claude Code の Bash で uv を実行する
 - **THEN** 設定が `uv.toml` から読まれ、同じ振る舞いになる
 
-#### Scenario: nixpkgs の更新と venv
+#### Scenario: パッチ版の更新と venv
 
-- **WHEN** lock の更新でインタープリタの store パスが変わり、`switch` の後に GC を実行する
-- **THEN** 既存の `.venv` は、プロファイルを経由して新しいインタープリタで動き続ける
+- **WHEN** lock の更新で、同じマイナー版のインタープリタの store パスが変わり (パッチ版の更新)、`switch` の後に GC を実行する
+- **THEN** 既存の `.venv` は、プロファイルを経由して新しいパッチ版で動き続ける
+
+#### Scenario: マイナー版が入れ替わるときの venv
+
+- **WHEN** nixpkgs の既定の `python3` が上がり、置く 2 つの版が入れ替わる lock の更新を `switch` する
+- **THEN** 置かれなくなった版を指す `.venv` は、そのマイナー版の実行ファイルがプロファイルから消えるので動かなくなる
+- **AND** 汎用の名前 (`python3`) を指す `.venv` は、別のマイナー版に黙って切り替わり、site-packages と合わなくなる
+- **AND** したがってマイナー版が入れ替わる更新の後は、影響を受ける `.venv` を作り直す (`uv sync`)。システムの文書はこの手順を示さなければならない (SHALL)
 
 ### Requirement: プロジェクトはマイナー版で選び、それ以外の版はプロジェクト側で渡す
 
