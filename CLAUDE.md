@@ -34,9 +34,8 @@ flake.nix          darwinModules.default / homeModules.default (input は持た�
 modules/darwin/    macOS 共通 (Nix 設定・sshd・home-manager の統合) + homebrew.nix (共通のリスト)
 modules/common/    OS 非依存のユーザー設定
                    (options / packages / zsh / git / tmux / terminal / ghostty /
-                    claude-code / ssh / neovim)
+                    ssh / neovim)
 ssh/rc             sshd がログインのたびに実行するスクリプト
-claude/            Claude Code のステータスラインのスクリプト
 ```
 
 - **依存は一方向** — このリポジトリから利用側を参照しない。
@@ -125,13 +124,9 @@ dry-run、評価) までを担当する。このリポジトリの変更は、�
   不要とされた。新しい設定ファイルは `programs.*` の native モジュール (無ければ `home.file` の
   store コピー) で置く。`mkOutOfStoreSymlink` を増やさない。
 - **アプリの設定画面での変更は保存されない — しかもエラーが出ない** — `~` の設定ファイルは
-  store への読み取り専用のコピーなので、Claude Code の `/config`・`/theme`・権限の「常に許可」は
-  そのセッション限りで次の起動で消え、herdr の設定画面 (`prefix+s`) は apply しても何も起きない
-  (`/theme` と herdr は実測。残りは公式ドキュメントの記述)。恒久的な変更は宣言を直して switch する。
-  所有者が「設定が消えた」と言ったらまずこれを疑う。
-  - **`programs.claude-code.marketplaces` を使わない。** `~/.claude/plugins/known_marketplaces.json`
-    まで読み取り専用になるが、それは Claude Code 自身が書き換えるファイル。marketplace は
-    `settings.extraKnownMarketplaces` に書く。
+  store への読み取り専用のコピーなので、herdr の設定画面 (`prefix+s`) は apply しても何も起きない
+  (実測)。恒久的な変更は宣言を直して switch する。所有者が「設定が消えた」と言ったらまずこれを疑う。
+  利用側が宣言したアプリ (Claude Code など) の同じ注意は、利用側の文書にある。
 - **native モジュールは頼んでいないものまで書く** — `programs.ghostty.enableZshIntegration` の既定
   (true) は `.zshrc` に Ghostty のシェル統合をもう 1 つ足し、`terminal.nix` の手書き (mkOrder 1500)
   と二重になった。`programs.ssh.enableDefaultConfig` の既定 (true) は `Host *` に
