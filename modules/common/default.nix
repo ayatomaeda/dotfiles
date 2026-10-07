@@ -13,7 +13,6 @@
     ./tmux.nix
     ./terminal.nix
     ./ghostty.nix
-    ./claude-code.nix
     ./ssh.nix
     ./neovim.nix
   ];

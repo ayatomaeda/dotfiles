@@ -166,22 +166,6 @@ prefix は tmux と同じ `Ctrl-b` だが、割り当てが違う。
 
 設定画面 (`Ctrl-b s`) で変えても保存されない (下の「設定を変える」)。
 
-## Claude Code のステータスライン
-
-```
-󰚩 Opus │ 󰧑 ▰▰▰▱▱▱▱▱▱▱  30% │ 󰘬 main │ +12 -3 │ 󰈮 2
-󰥔 ▰▰▱▱▱▱▱▱▱▱  20%  resets at 14:00
-󰃭 ▰▱▱▱▱▱▱▱▱▱  10%  resets at 9/20 9:00
-```
-
-| 行 | 内容 |
-|---|---|
-| 1 | モデル / コンテキスト使用率 / ブランチ / このセッションで増減した行数 / 変更中のファイル数 |
-| 2 | 5 時間枠のレート制限と、リセット時刻 |
-| 3 | 7 日枠のレート制限と、リセット時刻 |
-
-バーは 50% で黄、80% で赤になる。2〜3 行目はセッション最初の応答が返るまで出ない。
-
 ## 設定を変える
 
 設定ファイルはすべて宣言から生成していて、`~` にあるのは読み取り専用のコピー。
@@ -196,18 +180,15 @@ $ sudo darwin-rebuild switch --flake <利用側のリポジトリ>#<host>
 | 変えたいもの | 書く場所 |
 |---|---|
 | Ghostty (テーマ・フォント・透過など) | `modules/common/ghostty.nix` |
-| Claude Code (`settings.json`、プラグイン、権限) | `modules/common/claude-code.nix` |
-| Claude Code のステータスライン | `claude/statusline-command.sh` |
 | ssh の共通設定 | `modules/common/ssh.nix` |
 | ssh の接続先 | 利用側の `programs.ssh.settings.<host>` |
 | herdr | `modules/common/terminal.nix` の `programs.herdr.settings` |
 | どの環境でも使うパッケージ | `modules/common/packages.nix`、`modules/darwin/homebrew.nix` |
-| その環境でだけ使うパッケージ、git の identity | 利用側 |
+| その環境でだけ使うパッケージ、git の identity、エージェント (Claude Code など) の設定 | 利用側 |
 
 **アプリの設定画面での変更は保存されない。エラーも出ない。**
 
-- Claude Code の `/config`・`/theme`・権限の「常に許可」・プラグインの切り替え:
-  そのセッションだけ効いて、次に起動すると戻る。
 - herdr の設定画面 (`Ctrl-b s`): apply しても何も変わらない。
 
-気に入った設定は、上の表の場所に書いて switch する。
+気に入った設定は、上の表の場所に書いて switch する。利用側が宣言したアプリ (Claude Code など) の
+保存されない操作は、利用側の文書を見る。

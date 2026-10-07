@@ -13,15 +13,15 @@ flake の input として取り込み、ホストの構成と環境固有の値 
 
 | 出力 | 中身 |
 |---|---|
-| `homeModules.default` | home-manager のモジュール (`modules/common/`)。zsh / git / tmux / 端末のツール / Ghostty / Claude Code / ssh / neovim の設定と、どの環境でも使う CLI ツール |
+| `homeModules.default` | home-manager のモジュール (`modules/common/`)。zsh / git / tmux / 端末のツール / Ghostty / ssh / neovim の設定と、どの環境でも使う CLI ツール |
 | `darwinModules.default` | nix-darwin のモジュール (`modules/darwin/`)。Nix の設定 (flakes の有効化、channel の無効化。設定と daemon は nix-darwin が管理する)、sshd の認証方式、home-manager の統合の設定、どの環境でも使う cask と App Store アプリのリスト |
 | `darwinConfigurations.example` | **評価用の例の構成 (実在のホストではない)**。CI が評価して、モジュールが利用側なしでも壊れていないことを確かめる。利用側の書き方の見本も兼ねる |
 
 | ファイル / ディレクトリ | 役割 |
 |---|---|
-| `modules/common/` | `options` / `packages` / `zsh` / `git` / `tmux` / `terminal` / `ghostty` / `claude-code` / `ssh` / `neovim` |
+| `modules/common/` | `options` / `packages` / `zsh` / `git` / `tmux` / `terminal` / `ghostty` / `ssh` / `neovim` |
 | `modules/darwin/` | macOS 共通の設定と `homebrew.nix` (リストだけ) |
-| `ssh/rc` `claude/statusline-command.sh` | 宣言が読むスクリプトの本体。store へコピーされるので、編集は switch で反映 |
+| `ssh/rc` | 宣言が読むスクリプトの本体。store へコピーされるので、編集は switch で反映 |
 | `docs/GUIDE.md` | 使えるようになっているキー・コマンドの早見表と、設定を変えるときに書く場所 |
 | `openspec/specs/` | 要件 |
 | `.github/workflows/` | CI (例の構成の評価) と `flake.lock` の週次自動更新 |
@@ -119,8 +119,25 @@ core のモジュールが正しく動くために、利用側の宣言に頼っ
 - **GUI アプリ (cask) と Mac App Store アプリ (mas)** は Nix では扱えないため、nix-darwin の `homebrew`
   モジュール経由で宣言的に Homebrew を駆動する。core は**リストだけ**を宣言し、`homebrew.enable` と
   `onActivation` (更新と cleanup の方針) は利用側が決める。
-- **Claude Code** は、自動更新される native インストーラ (`curl -fsSL https://claude.ai/install.sh | bash`) で
-  入れる。Homebrew 管理下だと自動更新が止まるため、リストに置いていない。
+
+### エージェントの設定は利用側が持つ
+
+core は、特定のエージェント製品の設定 (Claude Code の `settings.json`、ステータスライン) と、そのアプリの cask を
+宣言しない。使うエージェントは環境によって違い、core に置くと外せないため。使う利用側が、`programs.claude-code` などを
+自分の構成に書く。`jq` / `ripgrep` / `fd` / `herdr` は、どのエージェントでも使う道具として core にある。
+
+**以前の core からの移行 (`move-claude-code-to-consumer`):** 以前の core は `programs.claude-code` (`settings.json` と
+ステータスライン) と cask `"claude"` を宣言していた。lock を更新すると、どちらも無くなる。
+
+- Claude Code を使う利用側は、それらを自分の構成に宣言する。**lock の更新と同じコミットで行う。** lock だけを先に
+  上げると、その世代では `~/.claude/settings.json` が生成されない。
+- Claude Code 本体は、自動更新される native インストーラ (`curl -fsSL https://claude.ai/install.sh | bash`) で入れ、
+  `programs.claude-code.package = null` にする。cask `claude-code` や Nix のパッケージで入れると自動更新が止まる。
+- `homebrew.onActivation.cleanup = "uninstall"` の利用側は、cask `"claude"` を足さないと次の switch でデスクトップ版が
+  削除される。
+- lock を自動で更新する仕組みがある利用側は、core だけを上げるその PR をそのまま入れない。core を上げる前に、利用側で
+  「`programs.claude-code.enable` が true で、`homebrew.casks` に `claude` がある」ことを assertion にしておくと、
+  core だけを上げた lock は評価で止まる。
 
 ## 変更を試す、反映する
 
@@ -139,7 +156,7 @@ core の変更をマージしたら、利用側で lock を更新するコミッ
 ## 設計の方針
 
 **設定ファイルはすべて宣言から生成する** (`retire-out-of-store-symlinks`)。Ghostty・herdr・
-Claude Code・ssh の設定は `programs.*` に書き、`~` に置かれる実体は Nix store への読み取り専用の
+ssh の設定は `programs.*` に書き、`~` に置かれる実体は Nix store への読み取り専用の
 コピーになる。**手元の実体とリポジトリの宣言がずれる経路を作らない** ためで、編集して即反映させる
 out-of-store symlink は使わない。設定を変えるときはリポジトリを直して switch する。
 アプリの設定画面での変更が保存されないことに注意 (下の「保存されない操作」)。
@@ -155,8 +172,8 @@ out-of-store symlink は使わない。設定を変えるときはリポジト�
 
 ## 端末のツール
 
-`modules/common/terminal.nix` にまとめてある。**この端末は人間と Claude Code が同じシェル
-構成を共有しており、主な使い手は非対話のエージェントである。** そのため一般的な「モダン
+`modules/common/terminal.nix` にまとめてある。**この端末は人間と非対話のエージェント
+(Claude Code、Codex など) が同じシェル構成を共有しており、主な使い手は非対話のエージェントである。** そのため一般的な「モダン
 端末」構成のうち打鍵量を減らすもの (`zsh-autosuggestions` / `zsh-abbr` / `atuin`) は採らず、
 次の 4 つに配分している。
 
@@ -288,9 +305,10 @@ tmux は置き換えない。**
 - **承認が無人の接続先に出たら、接続元の herdr から接続し直す。** リンクが herdr 以外の接続
   (直前の `ssh <host>` など) を指したまま、その接続が先に閉じた場合に起きる。
 - ssh で相手の Mac に入って herdr を起動する使い方 (tmux と同じ使い方) はしない。
-- **`herdr integration install claude` は実行しない。** `~/.claude/settings.json` は読み取り専用なので
-  hook の追加は保存されず、hook のスクリプト (`~/.claude/hooks/herdr-agent-state.sh`) だけが宣言の外に
-  残る。エージェントの状態は連携しなくても画面から判定される。
+- **`herdr integration install claude` は実行しない。** 利用側が Claude Code の設定を宣言している環境では
+  `~/.claude/settings.json` は読み取り専用なので、hook の追加は保存されず、hook のスクリプト
+  (`~/.claude/hooks/herdr-agent-state.sh`) だけが宣言の外に残る。エージェントの状態は連携しなくても
+  画面から判定される。
 
 ```sh
 $ herdr                         # 起動 (サーバーが動いていれば再接続)
@@ -446,17 +464,9 @@ authenticationmethods publickey
 
 | 操作 | 挙動 | 恒久的に変えるには |
 |---|---|---|
-| Claude Code の `/config`・`/theme` | そのセッションだけ効き、次の起動で戻る | `modules/common/claude-code.nix` の `settings` |
-| Claude Code の権限の「常に許可」 | 同上 | 同上 (`permissions.allow`) |
-| Claude Code のプラグインの有効 / 無効 | 同上 | 同上 (`enabledPlugins`) |
 | herdr の設定画面 (`prefix+s`) | **いまのセッションにも反映されない** | `modules/common/terminal.nix` の `programs.herdr.settings` |
 
-実測したのは `/theme` と herdr の設定画面。Claude Code のほかの 2 つは同じ `settings.json` への
-書き込みで、読み取り専用のときは「そのセッション限り」になると公式ドキュメントにある。
-
-Claude Code は `~/.claude/settings.json` を読み取り専用のまま扱い、ファイルを置き換えない
-(実測: 変更後も store への symlink のまま)。ユーザー単位の `settings.local.json` は存在しないので、
-書き込める逃げ道はプロジェクト単位の設定 (`.claude/settings.local.json`) だけ。
+herdr の設定画面は実測。利用側が宣言したアプリ (Claude Code など) の保存されない操作は、利用側の文書に書く。
 
 ## `darwin-rebuild` について
 
