@@ -31,9 +31,10 @@ Claude のデスクトップ版の cask は、core を使うすべての利用�
 
 - `dotfiles-management`: core が特定のエージェント製品の設定と、その製品のためだけの依存を持たない要件を足す。一般的な道具は
   core に置く。「保存されない操作を文書に書く」の例示から Claude Code を外す (書く場所は、そのアプリを宣言した利用側の文書になる)。
-- `package-management`: 「暗黙の外部依存を宣言に引き上げる」の Scenario の例を、core に残るスクリプトに改める。
-- `terminal-tooling`: 「マルチプレクサの連携で Claude Code の設定を宣言外に変更しない」の Scenario が名指しする
-  `modules/common/claude-code.nix` を改める (core は Claude Code の設定を持たない)。
+  「実行可能なスクリプトの配置」の Scenario の例を、core に残るスクリプト (git の署名のラッパー) に改める。
+- `terminal-tooling`: 「暗黙の外部依存を宣言に引き上げる」の Scenario から `claude/statusline-command.sh` を外し、利用側の
+  スクリプトが core の宣言に頼ってよいことを足す。「マルチプレクサの連携で Claude Code の設定を宣言外に変更しない」の
+  Scenario が名指しする `modules/common/claude-code.nix` を改める (core は Claude Code の設定を持たない)。
 
 ## Impact
 

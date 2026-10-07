@@ -7,22 +7,23 @@
 - [ ] 2.1 `modules/common/claude-code.nix` を削除し、`modules/common/default.nix` の import から外す
 - [ ] 2.2 `claude/statusline-command.sh` を削除する (`claude/` ごと)
 - [ ] 2.3 `modules/darwin/homebrew.nix` の casks から `"claude"` と、`claude-code` を除外した理由のコメントを外す
-- [ ] 2.4 `modules/common/terminal.nix` の `programs.jq` と `programs.ripgrep` のコメントを、core に置く一般的な理由に書き直す (design D1)。シェルスナップショットへの配慮のコメントは変えない
+- [ ] 2.4 `modules/common/terminal.nix` の `programs.jq` と `programs.ripgrep` のコメントを、core に置く一般的な理由に書き直す (design D1)。冒頭の「人間と Claude Code が同じシェル構成を共有」も「人間と非対話のエージェント (Claude Code、Codex など)」に改める (README の端末のツールの節も同じ)。シェルスナップショットへの配慮のコメントは変えない
 - [ ] 2.5 評価用の例の構成 (`darwinConfigurations.example`) を評価し、`programs.claude-code.enable` が false で、cask のリストに `claude` が無いことを確かめる
 
 ## 3. 文書
 
-- [ ] 3.1 `README.md`: モジュールの表と構造の表から `claude-code` と `claude/` を外す。「Claude Code は native インストーラ」の節と、保存されない操作の表の Claude Code の行と後続の説明を外す。利用側への移行の注記 (lock を更新すると `~/.claude/settings.json` と cask `claude` が無くなる。使うなら自分で宣言し、lock の更新と同じコミットで行う。`cleanup = "uninstall"` では足さないとデスクトップ版が削除される。lock を自動で更新する仕組みがある利用側は、core だけを上げるその PR をそのまま入れない) を足す。端末のツールの表の「エージェントが走る」の説明を確かめる
+- [ ] 3.1 `README.md`: モジュールの表と構造の表から `claude-code` と `claude/` を外す。「Claude Code は native インストーラ」の節と、保存されない操作の表の Claude Code の行と後続の説明を外す。利用側への移行の注記 (lock を更新すると `~/.claude/settings.json` と cask `claude` が無くなる。使うなら自分で宣言し、lock の更新と同じコミットで行う。`cleanup = "uninstall"` では足さないとデスクトップ版が削除される。lock を自動で更新する仕組みがある利用側は、core だけを上げるその PR をそのまま入れない。利用側で「Claude Code の設定と cask がある」ことを assertion にしておくと、その PR は評価で止まる) を足す。端末のツールの表の「エージェントが走る」の説明を確かめる
 - [ ] 3.2 `docs/GUIDE.md`: 「Claude Code のステータスライン」の節と、「書く場所」の表の Claude Code の 2 行、保存されない操作の Claude Code の項を外す
 - [ ] 3.3 `CLAUDE.md`: 構造の図から `claude-code` と `claude/` を外す。「アプリの設定画面での変更は保存されない」から Claude Code の記述と `programs.claude-code.marketplaces` の項を外す (herdr の記述は残す)。シェルスナップショット、`TRAPINT`、`home.sessionVariables`、herdr の連携の注意は残す
-- [ ] 3.4 `rg -n -i 'claude' --glob '!openspec/**'` で残った記述を一覧し、design D1 の「残す」に当たるものだけが残っていることを確かめる
+- [ ] 3.4 `rg -n -i 'claude' --glob '!openspec/changes/**'` で残った記述を一覧し (`openspec/specs/` を含む)、design D1 の「残す」に当たるものだけが残っていることを確かめる
 
 ## 4. 確認 (利用側で、手元のクローンを指して。switch はしない)
 
 - [ ] 4.1 利用側に、外したものと同じ宣言 (`programs.claude-code`、statusline のスクリプト、cask `"claude"`) を足し (コミットしない)、`--override-input core path:../dotfiles` で各ホストを評価と build する
 - [ ] 4.2 1.1 と比べる: `.claude/settings.json` の中身と statusline の store パスが一致する。`home-manager-path` のエントリが一致する (`jq` が残る)。Brewfile の行の集合が一致する
-- [ ] 4.3 `nix-diff` で、drvPath の差が Brewfile の行の順序 (とそれを含む derivation) だけであることを確かめる
-- [ ] 4.4 利用側の宣言を足さずに評価し、`~/.claude/settings.json` が生成されないことと、Brewfile に `claude` が無いことを確かめる (ほかの利用側が lock を更新したときの姿)
+- [ ] 4.3 `nix run nixpkgs#nix-diff -- <前の drv> <後の drv>` で、drvPath の差が Brewfile の行の順序 (とそれを含む derivation) だけであることを確かめる。ほかの差が出たら、原因を特定して記録するまで先へ進まない
+- [ ] 4.4 宣言を減らす変更なので、利用側の Mac で `brew bundle cleanup` の dry-run を、1.1 の Brewfile と 4.1 で build した Brewfile のそれぞれに `--file` で向けて実行し、削除対象の一覧が同じで `claude` を含まないことを示す (`HOMEBREW_NO_AUTO_UPDATE=1`)
+- [ ] 4.5 利用側の宣言を足さずに評価し、`~/.claude/settings.json` が生成されないことと、Brewfile に `claude` が無いことを確かめる (ほかの利用側が lock を更新したときの姿)
 
 ## 5. archive とマージ
 

@@ -100,6 +100,9 @@ core の README と CLAUDE.md にある次の記述は、Claude Code の設定�
 
 - [ほかの利用側で、lock の更新とともに Claude Code の設定とデスクトップ版が消える] → README に移行の注記を書き、
   PR の本文にも書く。利用側の構成の名前は書かない。
+- [lock を自動で更新する利用側では、core だけを上げる PR が CI を通り、人の注意だけが D4 の順序を守る] → core からは
+  利用側を検査できない。README の移行の注記で、利用側に assertion (Claude Code の設定と cask `claude` があること) を置く
+  方法を示す。core の版が変わる前に置けば今も通り、core だけが上がった lock では評価が失敗する。
 - [利用側の statusline が core の `jq` に頼る。core が将来 `jq` を外すと statusline が `jq not found` を出す]
   → 利用側のコメントに、core の `jq` を前提にすることを約束として書く。core の側には利用側のことを書かない
   (依存は一方向)。statusline は `jq` が無ければ `jq not found` を表示して止まるだけで、Claude Code 自体は動く。
