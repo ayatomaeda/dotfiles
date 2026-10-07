@@ -23,7 +23,7 @@
 - [x] 4.2 1.1 と比べる: `.claude/settings.json` の中身と statusline の store パスが一致する。`home-manager-path` のエントリが一致する (`jq` が残る)。Brewfile の行の集合が一致する
 - [x] 4.3 `nix run nixpkgs#nix-diff -- <前の drv> <後の drv>` で、drvPath の差が Brewfile の行の順序 (とそれを含む derivation) だけであることを確かめる。ほかの差が出たら、原因を特定して記録するまで先へ進まない
 - [ ] 4.4 宣言を減らす変更なので、利用側の Mac で `brew bundle cleanup` の dry-run を、1.1 の Brewfile と 4.1 で build した Brewfile のそれぞれに `--file` で向けて実行し、削除対象の一覧が同じで `claude` を含まないことを示す (`HOMEBREW_NO_AUTO_UPDATE=1`)
-- [x] 4.5 利用側の宣言を足さずに評価し、`~/.claude/settings.json` が生成されないことと、Brewfile に `claude` が無いことを確かめる (ほかの利用側が lock を更新したときの姿)
+- [ ] 4.5 利用側の宣言を足さずに評価し、`~/.claude/settings.json` が生成されないことと、Brewfile に `claude` が無いことを確かめる (ほかの利用側が lock を更新したときの姿)
 
 ## 5. archive とマージ
 
@@ -40,7 +40,7 @@ core は `572e806` (コードの変更) を rev で指して照合した。
 |---|---|
 | `darwin-rebuild build` | 2 台とも成功 |
 | drvPath | 変わる (見込みどおり) |
-| `.claude/settings.json` | 中身も store パスも同一。利用側の PreToolUse の hook も入っている |
+| `.claude/settings.json` | 中身も store パスも同一 (利用側が足した設定を含む) |
 | `home-files` | 同一 |
 | ステータスラインのスクリプト | store パスが同一 (`…-claude-statusline`) |
 | `home-manager-path` | 同一 (807 件の解決先まで) |
@@ -49,5 +49,9 @@ core は `572e806` (コードの変更) を rev で指して照合した。
 | `nix-diff` | 差は Brewfile の drv だけ |
 | `brew bundle cleanup` の dry-run | 1 台目は移行前・移行後とも削除対象なし。2 台目は ssh がつながらず未確認 (利用側の適用の前に行う) |
 
-4.5: 利用側の宣言を足さずに core の実装を指すと、利用側が置いた assertion (Claude Code の設定と cask があること) で
-評価が止まる。宣言の無い姿は、評価用の例の構成で確かめた (2.5)。
+4.5 は書いたとおりには行っていない: 利用側の宣言を足さずに core の実装を指すと、利用側が置いた assertion
+(Claude Code の設定と cask があること) で評価が止まり、`settings.json` の有無まで進めない。宣言の無い姿は、代わりに
+評価用の例の構成で確かめた (2.5)。
+
+4.4 の 2 台目の Mac の dry-run は、利用側の適用 (switch) の前に利用側の手順で行い、削除対象を所有者に示して承認を得る。
+lock だけが先に上がる経路は、利用側の assertion が評価で止める。

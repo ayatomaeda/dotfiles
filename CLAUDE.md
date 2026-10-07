@@ -259,8 +259,9 @@ dry-run、評価) までを担当する。このリポジトリの変更は、�
   たびにリモートログインのオン / オフを巻き戻す。所有者は GUI で切り替えている。
 - **アプリの「連携をインストール」コマンドを実行しない** — `herdr integration install claude` は
   `~/.claude/settings.json` に hook を足し、`~/.claude/hooks/herdr-agent-state.sh` を作る。
-  前者は読み取り専用なので保存されず、**後者だけが宣言の外に残る** (`terminal-tooling`)。
-  必要になったら hook スクリプトもリポジトリで管理する変更として行う。
+  利用側が Claude Code の設定を宣言している環境では、前者は読み取り専用なので保存されず、
+  **後者だけが宣言の外に残る** (`terminal-tooling`)。必要になったら hook スクリプトも、
+  Claude Code の設定を宣言したリポジトリで管理する変更として行う。
 - **`.hm-bak` は差分を取ってから消す** — `backupFileExtension` が退避したファイルには、
   そのホストでしか有効化していなかった設定が入っていることがある (実例:
   `~/.claude/settings.json`)。「バックアップだから消してよい」ではなく「リポジトリ版が

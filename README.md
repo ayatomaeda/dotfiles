@@ -131,6 +131,8 @@ core は、特定のエージェント製品の設定 (Claude Code の `settings
 
 - Claude Code を使う利用側は、それらを自分の構成に宣言する。**lock の更新と同じコミットで行う。** lock だけを先に
   上げると、その世代では `~/.claude/settings.json` が生成されない。
+- Claude Code 本体は、自動更新される native インストーラ (`curl -fsSL https://claude.ai/install.sh | bash`) で入れ、
+  `programs.claude-code.package = null` にする。cask `claude-code` や Nix のパッケージで入れると自動更新が止まる。
 - `homebrew.onActivation.cleanup = "uninstall"` の利用側は、cask `"claude"` を足さないと次の switch でデスクトップ版が
   削除される。
 - lock を自動で更新する仕組みがある利用側は、core だけを上げるその PR をそのまま入れない。core を上げる前に、利用側で
