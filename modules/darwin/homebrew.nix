@@ -21,9 +21,6 @@
     casks = [
       "1password"
       "1password-cli"
-      "claude"
-      # "claude-code" は declarative 管理から除外。Homebrew 管理下だと自動アップデートが
-      # 無効化されるため、自動更新される native インストーラ版で管理する。
       "firefox"
       "font-sauce-code-pro-nerd-font"
       "font-source-han-code-jp"
