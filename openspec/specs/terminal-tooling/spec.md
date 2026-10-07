@@ -2,7 +2,6 @@
 
 ## Purpose
 端末のツール (シェル、差分の表示、移動、プロンプト、マルチプレクサ) の選び方と宣言のしかた。人間と非対話のエージェントが同じシェル構成を共有することを前提にする。
-
 ## Requirements
 ### Requirement: 対話シェル向けの変更を非対話実行へ波及させない
 
@@ -63,10 +62,12 @@ native モジュールはシェル統合の有効化・設定ファイルの生�
 
 `/usr/bin` に存在するコマンドは flake の pin の外にあり、OS の更新で版が変わっても構成は何も検知しない。
 
+利用側が管理するスクリプトは、core が宣言したコマンドに依存してよい (MAY)。その場合は、core の宣言を前提にすることを利用側のコメントに書く。
+
 #### Scenario: 管理下スクリプトの依存
 
-- **WHEN** `claude/statusline-command.sh` のような管理下のスクリプトが外部コマンドを呼ぶ
-- **THEN** そのコマンドが `home.packages` または `programs.*` により宣言されている
+- **WHEN** リポジトリが管理するスクリプトが外部コマンドを呼ぶ
+- **THEN** そのコマンドが `home.packages` または `programs.*` により、そのリポジトリか core で宣言されている
 - **AND** そのコマンドの解決先が Nix プロファイル配下であることを確認できる
 
 #### Scenario: 環境変数が指すコマンド
@@ -153,14 +154,14 @@ herdr と tmux は既定の prefix が同じで、ssh 越しの環境を読み�
 
 ### Requirement: マルチプレクサの連携で Claude Code の設定を宣言外に変更しない
 
-システムは、マルチプレクサの連携コマンド (`herdr integration install claude` 等) によって、`~/.claude/settings.json` や `~/.claude/hooks/` を宣言外で変更してはならない (MUST NOT)。連携が必要な場合は、追加される hook とスクリプトをリポジトリで管理する変更として行わなければならない (SHALL)。
+利用側が Claude Code の設定を宣言から生成している環境では、システムは、マルチプレクサの連携コマンド (`herdr integration install claude` 等) によって、`~/.claude/settings.json` や `~/.claude/hooks/` を宣言外で変更してはならない (MUST NOT)。連携が必要な場合は、追加される hook とスクリプトを、Claude Code の設定を宣言したリポジトリで管理する変更として行わなければならない (SHALL)。
 
-`~/.claude/settings.json` は宣言から生成した読み取り専用の実体なので、連携コマンドによる hook の追加は保存されず、hook スクリプトだけが宣言外に残る (`retire-out-of-store-symlinks`)。
+`~/.claude/settings.json` は宣言から生成した読み取り専用の実体なので、連携コマンドによる hook の追加は保存されず、hook スクリプトだけが宣言外に残る (`retire-out-of-store-symlinks`)。core は Claude Code の設定を持たないが、herdr は core が導入するので、この要件は core に置く。
 
 #### Scenario: herdr 導入直後の Claude Code 設定
 
-- **WHEN** herdr を導入して switch した
-- **THEN** `programs.claude-code.settings` (`modules/common/claude-code.nix`) に herdr の hook が含まれない
+- **WHEN** Claude Code の設定を宣言した利用側で、herdr を導入して switch した
+- **THEN** 利用側の `programs.claude-code.settings` に herdr の hook が含まれない
 - **AND** `~/.claude/hooks/herdr-agent-state.sh` が存在しない
 
 ### Requirement: マルチプレクサの複数マシン機能は、再接続の後も承認を接続元で行える構成で使う
