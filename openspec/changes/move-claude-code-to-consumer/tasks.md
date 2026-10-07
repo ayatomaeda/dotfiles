@@ -14,7 +14,7 @@
 
 - [ ] 3.1 `README.md`: モジュールの表と構造の表から `claude-code` と `claude/` を外す。「Claude Code は native インストーラ」の節と、保存されない操作の表の Claude Code の行と後続の説明を外す。利用側への移行の注記 (lock を更新すると `~/.claude/settings.json` と cask `claude` が無くなる。使うなら自分で宣言し、lock の更新と同じコミットで行う。`cleanup = "uninstall"` では足さないとデスクトップ版が削除される。lock を自動で更新する仕組みがある利用側は、core だけを上げるその PR をそのまま入れない。利用側で「Claude Code の設定と cask がある」ことを assertion にしておくと、その PR は評価で止まる) を足す。端末のツールの表の「エージェントが走る」の説明を確かめる
 - [ ] 3.2 `docs/GUIDE.md`: 「Claude Code のステータスライン」の節と、「書く場所」の表の Claude Code の 2 行、保存されない操作の Claude Code の項を外す
-- [ ] 3.3 `CLAUDE.md`: 構造の図から `claude-code` と `claude/` を外す。「アプリの設定画面での変更は保存されない」から Claude Code の記述と `programs.claude-code.marketplaces` の項を外す (herdr の記述は残す)。シェルスナップショット、`TRAPINT`、`home.sessionVariables`、herdr の連携の注意は残す
+- [ ] 3.3 `CLAUDE.md`: 構造の図から `claude-code` と `claude/` を外す。「アプリの設定画面での変更は保存されない」から Claude Code の記述と `programs.claude-code.marketplaces` の項を外す (herdr の記述は残す)。シェルスナップショット、`TRAPINT`、`home.sessionVariables`、herdr の連携の注意、`.hm-bak` の注意 (例の `~/.claude/settings.json` を含む) は残す
 - [ ] 3.4 `rg -n -i 'claude' --glob '!openspec/changes/**'` で残った記述を一覧し (`openspec/specs/` を含む)、design D1 の「残す」に当たるものだけが残っていることを確かめる
 
 ## 4. 確認 (利用側で、手元のクローンを指して。switch はしない)
@@ -30,4 +30,4 @@
 - [ ] 5.1 利用側の禁止語の検査を通す
 - [ ] 5.2 `openspec archive move-claude-code-to-consumer` で delta を `openspec/specs/` に反映し、この PR に積む
 - [ ] 5.3 PR の本文に、利用側への影響 (3.1 の移行の注記と同じ内容) を書く。利用側の構成の名前は書かない
-- [ ] 5.4 この PR のレビューを受けてマージする。利用側の lock の更新と宣言の追加は、利用側の change で 1 コミットにして行う
+- [ ] 5.4 この PR のレビューを受けてマージする。lock を自動で更新する利用側が、core だけが上がった lock を止める assertion を置く場合は、それが利用側に入ってからマージする。利用側の lock の更新と宣言の追加は、利用側の change で 1 コミットにして行う
