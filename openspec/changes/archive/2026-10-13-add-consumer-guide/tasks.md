@@ -14,15 +14,15 @@
 
 ## 3. 公開の前の検査 (所有者の端末で)
 
-- [ ] 3.1 core のクローンで `<家の構成のクローン>/scripts/check-core.sh ../dotfiles` を実行し (家の構成のクローンが隣にある所有者の端末で)、終了コードが 0 であることを確かめる。当たったら語の一覧を変えず、手引きの文章を役割の名前に書き直して、再び 0 になるまで繰り返す
-- [ ] 3.2 コミットメッセージとブランチ名も同じ検査に通す (`git log --format=%B main..HEAD | <家の構成のクローン>/scripts/check-core.sh -`、`git branch --show-current | <家の構成のクローン>/scripts/check-core.sh --names`)。どちらも 0 であることを確かめる
-- [ ] 3.3 手引きに家のリポジトリのコミットのハッシュが無いことを確かめる: `rg -n '\b[0-9a-f]{7,40}\b' docs/CONSUMER-GUIDE.md` の当たりがすべて core のコミットか、ハッシュでない語であることを目で確かめる
-- [ ] 3.4 語の一覧に無い私的な情報 (家でだけ使うアプリとツールの名前、家のほかのリポジトリの名前、家のユーザー名) が無いことを、家の構成の `modules/home/packages.nix`、`modules/darwin/homebrew.nix`、`modules/home/default.nix` の値と手引きを突き合わせて確かめる (キーのファイルは開かない)
-- [ ] 3.5 `openspec validate add-consumer-guide --strict` が通ることを確かめる
-- [ ] 3.6 モジュールを変えていないことを確かめる: `git diff --stat main -- modules flake.nix ssh` が空であること (drvPath の照合は要らない)
+- [x] 3.1 core のクローンで `<家の構成のクローン>/scripts/check-core.sh ../dotfiles` を実行し (家の構成のクローンが隣にある所有者の端末で)、終了コードが 0 であることを確かめる。当たったら語の一覧を変えず、手引きの文章を役割の名前に書き直して、再び 0 になるまで繰り返す
+- [x] 3.2 コミットメッセージとブランチ名も同じ検査に通す (`git log --format=%B main..HEAD | <家の構成のクローン>/scripts/check-core.sh -`、`git branch --show-current | <家の構成のクローン>/scripts/check-core.sh --names`)。どちらも 0 であることを確かめる
+- [x] 3.3 手引きに家のリポジトリのコミットのハッシュが無いことを確かめる: `rg -n '\b[0-9a-f]{7,40}\b' docs/CONSUMER-GUIDE.md` の当たりがすべて core のコミットか、ハッシュでない語であることを目で確かめる
+- [x] 3.4 語の一覧に無い私的な情報 (家でだけ使うアプリとツールの名前、家のほかのリポジトリの名前、家のユーザー名) が無いことを、家の構成の `modules/home/packages.nix`、`modules/darwin/homebrew.nix`、`modules/home/default.nix` の値と手引きを突き合わせて確かめる (キーのファイルは開かない)
+- [x] 3.5 `openspec validate add-consumer-guide --strict` が通ることを確かめる
+- [x] 3.6 モジュールを変えていないことを確かめる: `git diff --stat main -- modules flake.nix ssh` が空であること (drvPath の照合は要らない)
 
 ## 4. archive と PR
 
-- [ ] 4.1 `openspec archive add-consumer-guide` で `openspec/specs/consumer-guide/spec.md` を作り、Purpose が spec の `## Purpose` のとおりであることを確かめる。archive したものに 3.1 の検査を再び通す (1 コミット: `docs: add-consumer-guide を archive して specs に反映する`)
+- [x] 4.1 `openspec archive add-consumer-guide` で `openspec/specs/consumer-guide/spec.md` を作り、Purpose が spec の `## Purpose` のとおりであることを確かめる。archive したものに 3.1 の検査を再び通す (1 コミット: `docs: add-consumer-guide を archive して specs に反映する`)
 - [ ] 4.2 PR の本文を書き、`<家の構成のクローン>/scripts/check-core.sh -` に本文を通して 0 であることを確かめてから PR を出す。本文に利用側の構成の名前を書かない
 - [ ] 4.3 レビューを受けてマージする。利用側の lock の更新は急がない (モジュールは変わらない)
