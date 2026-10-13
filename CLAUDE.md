@@ -3,7 +3,8 @@
 macOS (Apple Silicon) の環境を Nix flake + nix-darwin + home-manager で宣言的に管理するための
 **共通のモジュール**。このリポジトリはホストを宣言しない。利用側のリポジトリ (家の構成、会社の構成など) が
 flake の input として取り込み、ホストの構成と環境固有の値を与える。使い方は `README.md`、
-日々の操作は `docs/GUIDE.md`、要件は `openspec/specs/` を参照。
+日々の操作は `docs/GUIDE.md`、利用側のリポジトリの作り方と運用は `docs/CONSUMER-GUIDE.md`、
+要件は `openspec/specs/` を参照。
 
 コメントの括弧内にある change の名前のうち、`openspec/changes/` (archive を含む) に無いもの
 (`remote-agent-forwarding` など) は、所有者の非公開の設計記録を指す。その経緯はこのリポジトリには無く、
