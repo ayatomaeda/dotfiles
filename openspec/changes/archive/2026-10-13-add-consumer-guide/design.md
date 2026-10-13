@@ -119,7 +119,7 @@ core の説明はリンク先にある)。
   `specialArgs` で `core` とスキルの上流を渡し、`home-manager.extraSpecialArgs` で home のモジュールへ渡す。
 - core の README の例との違い: 家は `hosts/<host>` から `modules/darwin` を import し、`flake.nix` の modules には
   `hosts/<host>`、home-manager の darwin モジュール、`core.darwinModules.default` だけを並べる。
-- `hosts/<host>/` は `nixpkgs.hostPlatform` だけ。家の 2 台は宣言が同一で、差が出た時点でホスト側に書く。ホストごとの
+- `hosts/<host>/` は `nixpkgs.hostPlatform` だけ。家のホストは宣言が同一で、差が出た時点でホスト側に書く。ホストごとの
   層化 (cask の出し分けなど) はしていない。
 - ユーザー名とホームディレクトリは `let` で 1 か所に定義する (`users.users.<user>.home` と `home.homeDirectory` が
   ずれると home-manager が別の場所へ配備する)。
