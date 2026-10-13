@@ -6,6 +6,7 @@ macOS (Apple Silicon) の環境を **Nix flake + nix-darwin + home-manager** で
 **このリポジトリはホストを宣言しない。** 利用側のリポジトリ (所有者の家の構成、会社の構成など) が
 flake の input として取り込み、ホストの構成と環境固有の値 (ユーザー名、git の identity、ssh の接続先、
 その環境でだけ使うパッケージ) を与える。所有者の環境のためのもので、第三者向けの互換性は約束しない。
+利用側のリポジトリの作り方と運用は [`docs/CONSUMER-GUIDE.md`](docs/CONSUMER-GUIDE.md) にある。
 
 **秘密はここに置かない。** SSH 秘密鍵、API トークン、kubeconfig の client-secret は、利用側にも置かない。
 
@@ -23,6 +24,7 @@ flake の input として取り込み、ホストの構成と環境固有の値 
 | `modules/darwin/` | macOS 共通の設定と `homebrew.nix` (リストだけ) |
 | `ssh/rc` | 宣言が読むスクリプトの本体。store へコピーされるので、編集は switch で反映 |
 | `docs/GUIDE.md` | 使えるようになっているキー・コマンドの早見表と、設定を変えるときに書く場所 |
+| `docs/CONSUMER-GUIDE.md` | 利用側のリポジトリの作り方と運用の手引き。所有者の家の構成を情報源にし、冒頭の `最終照合:` はそれと突き合わせた日 |
 | `openspec/specs/` | 要件 |
 | `.github/workflows/` | CI (例の構成の評価) と `flake.lock` の週次自動更新 |
 

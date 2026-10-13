@@ -9,8 +9,8 @@
 
 ## 2. README と CLAUDE.md から案内する (1 コミット: `docs: README と CLAUDE.md から利用側の手引きへ案内する (add-consumer-guide)`)
 
-- [ ] 2.1 `README.md` の冒頭の段落の後に手引きへの 1 文の案内を足し、「ファイル / ディレクトリ」の表に `docs/CONSUMER-GUIDE.md` の行を足す (design D8)。`rg -n 'CONSUMER-GUIDE' README.md` が 2 件当たることで確かめる
-- [ ] 2.2 `CLAUDE.md` の冒頭の段落の文書の案内に、利用側のリポジトリの作り方と運用は `docs/CONSUMER-GUIDE.md` と足す (design D8)。`rg -n 'CONSUMER-GUIDE' CLAUDE.md` が当たることで確かめる
+- [x] 2.1 `README.md` の冒頭の段落の後に手引きへの 1 文の案内を足し、「ファイル / ディレクトリ」の表に `docs/CONSUMER-GUIDE.md` の行を足す (design D8)。`rg -n 'CONSUMER-GUIDE' README.md` が 2 件当たることで確かめる
+- [x] 2.2 `CLAUDE.md` の冒頭の段落の文書の案内に、利用側のリポジトリの作り方と運用は `docs/CONSUMER-GUIDE.md` と足す (design D8)。`rg -n 'CONSUMER-GUIDE' CLAUDE.md` が当たることで確かめる
 
 ## 3. 公開の前の検査 (所有者の端末で)
 
