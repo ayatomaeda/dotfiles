@@ -68,6 +68,9 @@
   `Claude Code` の言及は 6 節の外に 9 か所 (2 節の木 ×3、`flake.nix` の例、2 節の `CLAUDE.md` の小節、5 節の cask の
   例と Homebrew の対象外の例、7 節の初回の手順、11 節の検査の名前)。すべて tasks 1.2・1.4・1.5 で扱い、最後に 0 件で
   確かめる。
+  apply の後のレビューで見つけた漏れ: スキルの上流の input (`anthropic-skills`) を `flake.nix` の例から外した後も、
+  受け取る側 (`modules/darwin/default.nix` の例の引数と `extraSpecialArgs`、説明の箇条書き) に 3 か所残っていた。
+  `Claude Code` と `claude` の検査では当たらない語だった。input を外すときは、その名前でも検査する。
 
 ## Risks / Trade-offs
 

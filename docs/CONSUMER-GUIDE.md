@@ -105,8 +105,8 @@ core の [`README.md` の「使い方」](../README.md#使い方)の形。
 - **`core` の 3 つの input を follows でそろえる。** そろえないと nixpkgs を 2 つ取り、core のモジュールが別の版の
   nixpkgs で評価されうる。core の input は core の評価用の例の構成のためのもので、core の `flake.lock` は利用側の
   構成に影響しない。
-- `specialArgs` で `core` とスキルの上流を nix-darwin のモジュールへ渡し、`modules/darwin/default.nix` が
-  `home-manager.extraSpecialArgs = { inherit anthropic-skills; };` で home のモジュールへ渡す。
+- `specialArgs` で `core` を nix-darwin のモジュールへ渡す。`modules/darwin/default.nix` はそれを受け取って
+  `core.homeModules.default` を home のモジュールに並べる。利用側が input を足すときも同じ経路で渡す。
 - core の README の例との違いは、`modules/darwin` を `flake.nix` に並べず `hosts/<host>` から import していること。
   `flake.nix` の `modules` には、ホスト、home-manager の darwin モジュール、`core.darwinModules.default` の 3 つだけを
   並べる。
@@ -130,7 +130,7 @@ core の [`README.md` の「使い方」](../README.md#使い方)の形。
 
 ```nix
 # modules/darwin/default.nix
-{ core, anthropic-skills, ... }:
+{ core, ... }:
 let
   username = "<user>";
   # 1 か所で定義する。users.users.*.home と home.homeDirectory が別の場所を指すと、
@@ -148,7 +148,6 @@ in
   };
   system.stateVersion = <初回の値>;
 
-  home-manager.extraSpecialArgs = { inherit anthropic-skills; };
   home-manager.users.${username} = {
     imports = [ core.homeModules.default ../home ];
     home.username = username;
@@ -369,8 +368,8 @@ PR の本文は lock のコミットの本文、token の優先順位、`GITHUB_
   PR にする。
 - **core が宣言を外す変更は、利用側では lock の更新と宣言の追加を 1 コミットにする。** lock だけが先に上がると、
   その世代では宣言が消える (core の README の「エージェントの設定は利用側が持つ」の移行)。週次の自動の PR は
-  core だけを上げる。利用側が、lock だけを上げた世代を評価で止める assertion を持つなら (家は持っている)、赤くなった PR は
-  マージせずに閉じ、宣言を足したコミットで入れ直す。
+  core だけを上げる。利用側が、lock だけを上げた世代を評価で止める assertion を持つなら (家は持っている: 利用側の宣言と cask が
+  有ることを nix-darwin の `assertions` で確かめる)、赤くなった PR はマージせずに閉じ、宣言を足したコミットで入れ直す。
 - 家は private の Free プランで branch protection が使えない (API が 403) ので、**赤い PR のマージは止まらない**。
   赤い PR を入れないのは人の判断に依っている。
 - lock の更新の PR で家が見るもの:
@@ -435,7 +434,7 @@ PR の本文は lock のコミットの本文、token の優先順位、`GITHUB_
 - **秘密 (SSH の秘密鍵、API トークン、kubeconfig の client-secret) は private のリポジトリにも置かない。** 秘密鍵は
   1Password の SSH agent が持ち、リポジトリには公開鍵だけを置く。
 - **Nix の store は誰でも読める。** 宣言に書いた値は store に入る。
-- 家は MCP のキーを 1 つ、**秘密として扱わない**と判断して家のリポジトリと store に置いている (漏れて起きるのは
+- 家は、エージェントが使う外部サービス (MCP のサーバー) のキーを 1 つ、**秘密として扱わない**と判断して家のリポジトリと store に置いている (漏れて起きるのは
   無料枠の消費だけ)。値は別のファイルに分けて宣言から読み (ファイルの中身は宣言に写さない)、エージェントが宣言を読むたびに値が
   文脈に入らないようにしている。家のエージェントはそのファイルを開かず、`git show` や `nix derivation show` で値を
   出力しない。
