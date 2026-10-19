@@ -36,6 +36,8 @@
   (家のほうが `/agents` の行まで持つ)。各 Mac の後片付け → 家の `README.md`「Claude Code の拡張の後片付け」。
   ステータスラインの全文 → 家の `claude/statusline-command.sh`。欠けている項は無かった。apply のときに task 1.7 で
   もう一度確かめ、欠けが見つかったら、core の削除より先に家へ書き足す (core の履歴にも残るが、家に無い状態を作らない)。
+  apply (2026-10-19) で再確認: 上の各項が家の文書と実物に有ることを grep と ls で確かめ、欠けは無かった。`imports` の例に
+  残っていた家のモジュールのファイル名 2 行も、task 1.5 の検査で見つけて役割の形に直した。
 - **D2. 読み手は「人か、エージェント」に広げ、エージェント向けの形は条件付きで残す。** 2 節の `CLAUDE.md` の小節と
   構造の木の `CLAUDE.md` の行は「エージェントに core の `CLAUDE.md` を読ませるなら」の形にする。Claude Code 以外の
   エージェントを使う利用側がそのまま読めるようにするため。退けた案: エージェントの記述をすべて消す — 7 節の
@@ -66,6 +68,9 @@
   `Claude Code` の言及は 6 節の外に 9 か所 (2 節の木 ×3、`flake.nix` の例、2 節の `CLAUDE.md` の小節、5 節の cask の
   例と Homebrew の対象外の例、7 節の初回の手順、11 節の検査の名前)。すべて tasks 1.2・1.4・1.5 で扱い、最後に 0 件で
   確かめる。
+  apply の後のレビューで見つけた漏れ: スキルの上流の input (`anthropic-skills`) を `flake.nix` の例から外した後も、
+  受け取る側 (`modules/darwin/default.nix` の例の引数と `extraSpecialArgs`、説明の箇条書き) に 3 か所残っていた。
+  `Claude Code` と `claude` の検査では当たらない語だった。input を外すときは、その名前でも検査する。
 
 ## Risks / Trade-offs
 
