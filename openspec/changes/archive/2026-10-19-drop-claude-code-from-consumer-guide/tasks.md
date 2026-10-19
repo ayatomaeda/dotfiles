@@ -12,12 +12,12 @@
 
 ## 2. 公開の前の検査 (所有者の端末で)
 
-- [ ] 2.1 core のクローンで `<家の構成のクローン>/scripts/check-core.sh ../dotfiles` を実行し、終了コードが 0 であることを確かめる。当たったら語の一覧を変えず、手引きの文章を役割の名前に書き直して、再び 0 になるまで繰り返す
-- [ ] 2.2 コミットメッセージとブランチ名も同じ検査に通す (`git log --format=%B main..HEAD | <家の構成のクローン>/scripts/check-core.sh -`、`git branch --show-current | <家の構成のクローン>/scripts/check-core.sh --names`)。どちらも 0 であることを確かめる
-- [ ] 2.3 モジュールを変えていないことを確かめる: `git diff --stat main -- modules flake.nix ssh` が空であること (drvPath の照合は要らない)
+- [x] 2.1 core のクローンで `<家の構成のクローン>/scripts/check-core.sh ../dotfiles` を実行し、終了コードが 0 であることを確かめる。当たったら語の一覧を変えず、手引きの文章を役割の名前に書き直して、再び 0 になるまで繰り返す
+- [x] 2.2 コミットメッセージとブランチ名も同じ検査に通す (`git log --format=%B main..HEAD | <家の構成のクローン>/scripts/check-core.sh -`、`git branch --show-current | <家の構成のクローン>/scripts/check-core.sh --names`)。どちらも 0 であることを確かめる
+- [x] 2.3 モジュールを変えていないことを確かめる: `git diff --stat main -- modules flake.nix ssh` が空であること (drvPath の照合は要らない)
 
 ## 3. archive と PR
 
-- [ ] 3.1 `openspec validate drop-claude-code-from-consumer-guide --strict` が通ることを確かめ、`openspec archive drop-claude-code-from-consumer-guide` で `openspec/specs/consumer-guide/spec.md` に delta を反映する。反映後の spec に `Claude Code` の語が残っていないことを `rg -n 'Claude Code' openspec/specs/consumer-guide/spec.md` で確かめ、2.1 の検査を再び通す (1 コミット: `docs: drop-claude-code-from-consumer-guide を archive して specs に反映する`)
+- [x] 3.1 `openspec validate drop-claude-code-from-consumer-guide --strict` が通ることを確かめ、`openspec archive drop-claude-code-from-consumer-guide` で `openspec/specs/consumer-guide/spec.md` に delta を反映する。反映後の spec に `Claude Code` の語が残っていないことを `rg -n 'Claude Code' openspec/specs/consumer-guide/spec.md` で確かめ、2.1 の検査を再び通す (1 コミット: `docs: drop-claude-code-from-consumer-guide を archive して specs に反映する`)
 - [ ] 3.2 PR の本文を書き、`<家の構成のクローン>/scripts/check-core.sh -` に本文を通して 0 であることを確かめてから PR を出す。本文に利用側の構成の名前を書かない
 - [ ] 3.3 レビューを受けてマージする。家の側の作業 (lock の更新と、レビューの対象のパスの一覧の調整。design の Migration Plan 2) は家の PR で行う
