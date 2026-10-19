@@ -128,18 +128,9 @@ core は、特定のエージェント製品の設定 (Claude Code の `settings
 宣言しない。使うエージェントは環境によって違い、core に置くと外せないため。使う利用側が、`programs.claude-code` などを
 自分の構成に書く。`jq` / `ripgrep` / `fd` / `herdr` は、どのエージェントでも使う道具として core にある。
 
-**以前の core からの移行 (`move-claude-code-to-consumer`):** 以前の core は `programs.claude-code` (`settings.json` と
-ステータスライン) と cask `"claude"` を宣言していた。lock を更新すると、どちらも無くなる。
-
-- Claude Code を使う利用側は、それらを自分の構成に宣言する。**lock の更新と同じコミットで行う。** lock だけを先に
-  上げると、その世代では `~/.claude/settings.json` が生成されない。
-- Claude Code 本体は、自動更新される native インストーラ (`curl -fsSL https://claude.ai/install.sh | bash`) で入れ、
-  `programs.claude-code.package = null` にする。cask `claude-code` や Nix のパッケージで入れると自動更新が止まる。
-- `homebrew.onActivation.cleanup = "uninstall"` の利用側は、cask `"claude"` を足さないと次の switch でデスクトップ版が
-  削除される。
-- lock を自動で更新する仕組みがある利用側は、core だけを上げるその PR をそのまま入れない。core を上げる前に、利用側で
-  「`programs.claude-code.enable` が true で、`homebrew.casks` に `claude` がある」ことを assertion にしておくと、
-  core だけを上げた lock は評価で止まる。
+以前の core は Claude Code の設定と cask を宣言していた (`move-claude-code-to-consumer` で外した)。core が宣言を外す
+変更を利用側で受けるときの手順 (lock の更新と宣言の追加を 1 コミットにする、lock だけを上げた世代を評価で止める
+assertion) は、[`docs/CONSUMER-GUIDE.md` の「日々の運用」](docs/CONSUMER-GUIDE.md#6-日々の運用) にある。
 
 ## 変更を試す、反映する
 
