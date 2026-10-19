@@ -13,5 +13,5 @@
 
 ## 3. archive と PR
 
-- [ ] 3.1 `openspec validate trim-agent-config-migration-note --strict` が通ることを確かめ、`openspec archive` する (1 コミット: `docs: trim-agent-config-migration-note を archive する`)
+- [x] 3.1 `openspec validate trim-agent-config-migration-note --strict` が通ることを確かめ、`openspec archive` する (1 コミット: `docs: trim-agent-config-migration-note を archive する`)
 - [ ] 3.2 PR の本文を語の検査に通してから PR を出す
