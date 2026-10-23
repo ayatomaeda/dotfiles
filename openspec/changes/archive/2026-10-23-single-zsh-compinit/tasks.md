@@ -50,7 +50,7 @@
       `openspec/specs/terminal-tooling/spec.md` に delta を反映する。反映後の spec に要件が 1 つ増え、既存の要件が変わって
       いないことを `git diff --stat` と `rg -n '^### Requirement' openspec/specs/terminal-tooling/spec.md` で確かめる
       (1 コミット: `docs: single-zsh-compinit を archive して specs に反映する`)
-- [ ] 3.2 PR の本文を書き、`<家の構成のクローン>/scripts/check-core.sh -` に通して 0 であることを確かめてから PR を出す。
+- [x] 3.2 PR の本文を書き、`<家の構成のクローン>/scripts/check-core.sh -` に通して 0 であることを確かめてから PR を出す。
       本文に利用側の構成の名前と、利用側のコミットのハッシュを書かない
 - [ ] 3.3 レビューを受けてマージする。利用側 (家) の lock の更新と switch、switch の後の確認 (spec の Scenario「混ぜる」
       「補完が使える」を本物のシェルで通す。switch の前から動いている herdr / tmux のサーバーは起動し直す) は家の PR で行う
