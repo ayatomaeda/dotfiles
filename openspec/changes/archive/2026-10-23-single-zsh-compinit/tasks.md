@@ -55,3 +55,18 @@
 - [ ] 3.3 レビューを受けてマージする。利用側 (家) の lock の更新と switch、switch の後の確認 (spec の Scenario「混ぜる」
       「補完が使える」を本物のシェルで通す。switch の前から動いている herdr / tmux のサーバーは起動し直す) は家の PR で行う
       (design Migration Plan 2)
+
+## 4. 実装の PR のレビューへの対応 (1 コミット: `fix(zsh): 補完の dump の鍵に zsh の実体を足し、並びと補完の有無を評価で検査する (single-zsh-compinit)`)
+
+- [x] 4.1 `modules/common/zsh.nix` の `completionInit` で、dump の鍵を zsh の実体と版にする (design D7)。macOS の zsh で
+      `.zcompdump-usr-5.9`、Nix の zsh で `.zcompdump-nix-5.9.2` になることを、両方の zsh で鍵を計算して確かめる
+- [x] 4.2 `modules/common/zsh.nix` に、生成される `~/.zshrc` の並び (`typeset -U`、darwin では `brew shellenv`、
+      `compinit -d`) を検査する assertion を足す (design D8)。例の構成の評価が通り、`compinit` を mkOrder 545 と 505 に
+      置いた構成が止まり、oh-my-zsh を有効にした構成は止まらないことを `extendModules` の評価で確かめる
+- [x] 4.3 `modules/darwin/default.nix` に、`home-manager.users` が空でないことと、各ユーザーの zsh と補完が有効である
+      ことを検査する assertion を足す (design D9)。`enableCompletion` と `enable` のどちらかを `mkForce false` にした構成が
+      止まることで確かめる
+- [x] 4.4 利用側 (家) の 2 台で `--override-input` の build を通し、生成物の差が 1.3 と同じ箇所だけ (`~/.zshrc` の
+      `compinit` の行が鍵の計算を含む形に変わる) であることを確かめ、1.4 と同じ模擬を新しい生成物でやり直す。2 巡目の
+      8 回の起動で dump が書き換わらないこと
+- [x] 4.5 `CLAUDE.md` の項を、鍵 (実体と版) と 2 つの assertion に合わせて直す。公開前の語の検査を通す

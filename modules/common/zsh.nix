@@ -1,5 +1,42 @@
 { config, lib, pkgs, ... }:
+let
+  zsh = config.programs.zsh;
+  initLines = lib.splitString "\n" zsh.initContent;
+  # 生成される ~/.zshrc の中で、needle を含む最初の行の位置 (無ければ null)。
+  lineOf = needle: lib.lists.findFirstIndex (lib.hasInfix needle) null initLines;
+  typesetAt = lineOf "typeset -U path cdpath fpath manpath";
+  brewAt = lineOf ''eval "$(/opt/homebrew/bin/brew shellenv)"'';
+  compinitAt = lineOf "compinit -d ";
+  # oh-my-zsh と prezto は自分で compinit を呼ぶので、home-manager は compinit を置かない。
+  homeManagerOwnsCompinit = zsh.enableCompletion && !zsh.oh-my-zsh.enable && !zsh.prezto.enable;
+  ordered = a: b: a != null && b != null && a < b;
+in
 {
+  # 補完の dump の鍵が起動の仕方で揺れないための並び (single-zsh-compinit) を評価で検査する。
+  # 並びは home-manager の mkOrder の番号 (typeset -U が 510、compinit が 570) に依るので、
+  # home-manager が番号を変えても switch までは何も起きず、dump の作り直しが黙って戻る。
+  # CI は評価だけを行うので、ここで止める。
+  assertions = lib.optionals homeManagerOwnsCompinit [
+    {
+      assertion = ordered typesetAt compinitAt;
+      message = ''
+        dotfiles (single-zsh-compinit): 生成される ~/.zshrc で、fpath の重複を除く
+        `typeset -U` が compinit より前にない。home-manager の programs.zsh の mkOrder の
+        番号が変わった可能性がある。modules/common/zsh.nix の順序を home-manager に合わせ直す。
+      '';
+    }
+  ] ++ lib.optionals (homeManagerOwnsCompinit && pkgs.stdenv.hostPlatform.isDarwin) [
+    {
+      assertion = ordered typesetAt brewAt && ordered brewAt compinitAt;
+      message = ''
+        dotfiles (single-zsh-compinit): 生成される ~/.zshrc で、brew shellenv が
+        `typeset -U` の後、compinit の前にない。この並びでないと、端末のアプリが起動した
+        シェルと子のシェルで補完の dump の個数が違い、起動のたびに dump を作り直す。
+        modules/common/zsh.nix の brew shellenv の mkOrder を home-manager の番号に合わせ直す。
+      '';
+    }
+  ];
+
   # zsh を native モジュール化。既存 .zshrc の挙動を移植。
   programs.zsh = {
     enable = true;
@@ -16,14 +53,25 @@
       ignoreSpace = false;
     };
 
-    # 補完の dump を zsh の版ごとのファイルにする (single-zsh-compinit)。compinit は dump の
+    # 補完の dump を zsh の実体と版ごとのファイルにする (single-zsh-compinit)。compinit は dump の
     # 1 行目のファイルの個数と zsh の版が今のシェルと違えば作り直す。対話シェルは macOS の
     # /bin/zsh (ログインシェル) で、PATH の zsh は Nix の zsh なので、1 つの dump を使うと、
     # 片方を起動するたびにもう片方の dump が捨てられる。zsh を 1 つにそろえる宣言は無い
-    # (管理者ユーザーのログインシェルは nix-darwin が宣言しない)。置き場所は compinit の既定に
-    # 版を足したもの。補完の初期化はここの 1 回だけで、/etc/zshrc の compinit は darwin の
-    # モジュールが止める。
-    completionInit = ''autoload -U compinit && compinit -d "''${ZDOTDIR:-$HOME}/.zcompdump-$ZSH_VERSION"'';
+    # (管理者ユーザーのログインシェルは nix-darwin が宣言しない)。
+    # 鍵は版だけでは足りない。2 つの版がそろっても、zsh 同梱の関数のディレクトリが違うので
+    # 個数が違う。実体はモジュールの置き場所 ($module_path) で見分け、Nix の store にあるものは
+    # nix にまとめる (store の道を鍵にすると、同じ版の zsh が作り直されるたびにファイルが増える)。
+    # 例: macOS の zsh は .zcompdump-usr-5.9、Nix の zsh は .zcompdump-nix-5.9.2。
+    # 置き場所は compinit の既定 (${ZDOTDIR:-$HOME}/.zcompdump) に鍵を足したもの。
+    # 補完の初期化はここの 1 回だけで、/etc/zshrc の compinit は darwin のモジュールが止める。
+    completionInit = ''
+      case $module_path[1] in
+        /nix/store/*) __zcompdump_origin=nix ;;
+        *) __zcompdump_origin=''${''${''${module_path[1]%/lib/zsh/*}#/}//\//-} ;;
+      esac
+      autoload -U compinit && compinit -d "''${ZDOTDIR:-$HOME}/.zcompdump-$__zcompdump_origin-$ZSH_VERSION"
+      unset __zcompdump_origin
+    '';
 
     shellAliases = {
       ls = "ls -GF";
