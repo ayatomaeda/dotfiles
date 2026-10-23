@@ -30,17 +30,17 @@
 
 ## 2. 手引きを直す (1 コミット: `docs: 手引きの前提に補完の初期化の置き場所を足す (single-zsh-compinit)`)
 
-- [ ] 2.1 `docs/CONSUMER-GUIDE.md` の 1 節「家の前提」の「nix-darwin + home-manager」の項に、家の形 (Mac は 1 ユーザーで、
+- [x] 2.1 `docs/CONSUMER-GUIDE.md` の 1 節「家の前提」の「nix-darwin + home-manager」の項に、家の形 (Mac は 1 ユーザーで、
       そのユーザーが home-manager を使う) と、core が補完の初期化を home-manager の `~/.zshrc` だけに任せるので
       home-manager を使わないアカウントの対話 zsh には補完の初期化が無いことを書き、仕組みは `README.md` の「利用側が
       与えるもの」へのリンクで指す (design D6)。読み手への指示を書かないこと、`rg -n 'compinit|補完の初期化'
       docs/CONSUMER-GUIDE.md` の当たりが 1 節の中だけであることで確かめる
-- [ ] 2.2 2.1 の記述を家の構成 (ユーザーの数、home-manager の darwin モジュールの読み込み) と突き合わせ、冒頭の
+- [x] 2.2 2.1 の記述を家の構成 (ユーザーの数、home-manager の darwin モジュールの読み込み) と突き合わせ、冒頭の
       `最終照合:` をその日に改める (design D6)。`rg -n '^最終照合: [0-9]{4}-[0-9]{2}-[0-9]{2}$' docs/CONSUMER-GUIDE.md` が
       1 件だけ当たること
-- [ ] 2.3 手引きのリンクをすべて抽出し (`rg -o '\]\([^)]+\)' docs/CONSUMER-GUIDE.md`)、足したリンクのアンカーが `README.md`
+- [x] 2.3 手引きのリンクをすべて抽出し (`rg -o '\]\([^)]+\)' docs/CONSUMER-GUIDE.md`)、足したリンクのアンカーが `README.md`
       の見出しと一致することを確かめる
-- [ ] 2.4 1.7 と同じ検査を通す。コミットメッセージと branch 名も通す (`git log --format=%B main..HEAD |
+- [x] 2.4 1.7 と同じ検査を通す。コミットメッセージと branch 名も通す (`git log --format=%B main..HEAD |
       <家の構成のクローン>/scripts/check-core.sh -`、`git branch --show-current | <家の構成のクローン>/scripts/check-core.sh
       --names`)。どちらも 0 であること
 
