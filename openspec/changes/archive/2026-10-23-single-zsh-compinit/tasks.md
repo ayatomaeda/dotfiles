@@ -46,7 +46,7 @@
 
 ## 3. archive と PR
 
-- [ ] 3.1 `openspec validate single-zsh-compinit --strict` が通ることを確かめ、`openspec archive single-zsh-compinit` で
+- [x] 3.1 `openspec validate single-zsh-compinit --strict` が通ることを確かめ、`openspec archive single-zsh-compinit` で
       `openspec/specs/terminal-tooling/spec.md` に delta を反映する。反映後の spec に要件が 1 つ増え、既存の要件が変わって
       いないことを `git diff --stat` と `rg -n '^### Requirement' openspec/specs/terminal-tooling/spec.md` で確かめる
       (1 コミット: `docs: single-zsh-compinit を archive して specs に反映する`)
