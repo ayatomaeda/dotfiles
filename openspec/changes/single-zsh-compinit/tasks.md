@@ -2,30 +2,30 @@
 
 ## 1. 補完の dump の鍵を固定する (1 コミット: `fix(zsh): 補完の dump を起動の仕方に依らず作り直させない (single-zsh-compinit)`)
 
-- [ ] 1.1 `modules/darwin/default.nix` に `programs.zsh.enableGlobalCompInit = false;` を、理由のコメント (2 回の `compinit`
+- [x] 1.1 `modules/darwin/default.nix` に `programs.zsh.enableGlobalCompInit = false;` を、理由のコメント (2 回の `compinit`
       が別々の fpath を見ること、home-manager 側を残す理由、`enable` / `enableCompletion` を触らない理由、home-manager を
       使わないアカウントには補完の初期化が無い前提。design D1、D2) 付きで足す。`nix flake check --no-build` が通り、
       `nix eval --raw '.#darwinConfigurations.example.config.environment.etc.zshrc.text'` の出力に `compinit` の行が無く
       `bashcompinit` の行が残っていることで確かめる
-- [ ] 1.2 `modules/common/zsh.nix` の darwin の `initContent` (`brew shellenv` と `PATH` の並べ直し) を `lib.mkOrder 550` に
+- [x] 1.2 `modules/common/zsh.nix` の darwin の `initContent` (`brew shellenv` と `PATH` の並べ直し) を `lib.mkOrder 550` に
       し、`compinit` より前、home-manager の fpath の組み立てより後に置く理由をコメントに書く (design D3)。`FPATH` の
       export には手を加えない。`programs.zsh.completionInit` を `autoload -U compinit && compinit -d
       "${ZDOTDIR:-$HOME}/.zcompdump-$ZSH_VERSION"` にし、版ごとにする理由をコメントに書く (design D4)。`nix flake check
       --no-build` が通り、例の構成の `home-manager.users.<user>.programs.zsh.initContent` を評価して、`typeset -U`、
       `brew shellenv`、`compinit -d` がこの順で並ぶことで確かめる
-- [ ] 1.3 利用側 (家) のクローンで `--override-input core path:../dotfiles` の build を通し、生成物の差を確かめる (design D5
+- [x] 1.3 利用側 (家) のクローンで `--override-input core path:../dotfiles` の build を通し、生成物の差を確かめる (design D5
       (1)(2)): build の `etc/zshrc` と `/etc/zshrc` の差が `compinit` の 1 行だけ。home-manager の `home-files` の木の差が
       `.zshrc` だけで、その差が Homebrew の行の移動と `compinit` の `-d` だけ。`result` は終わったら消す (GC ルートを残さない)
-- [ ] 1.4 1.3 の `etc/zshrc` と `.zshrc` を作業用のディレクトリに置き、`NOSYSZSHRC=1` と `ZDOTDIR` で読ませて、spec の
+- [x] 1.4 1.3 の `etc/zshrc` と `.zshrc` を作業用のディレクトリに置き、`NOSYSZSHRC=1` と `ZDOTDIR` で読ませて、spec の
       Scenario「混ぜる」「補完が使える」「`/etc/zshrc` の `compinit` に頼らない」を通す (design D5 (3))。dump の置き場所は
       作業用のディレクトリに向け、ホームディレクトリに書かない。合格の条件: 2 巡目の 8 回の起動で dump の更新時刻が
       変わらない、1 つのシェルの起動が 0.15 s 程度、`_rg` `_brew` `_git` `compdef` が関数、標準エラー出力に補完の警告が無い
-- [ ] 1.5 `CLAUDE.md` の「踏むと痛い箇所」に 1 項を足す (design D6): 症状 (シェルから起動したシェルの起動が重い、dump が
+- [x] 1.5 `CLAUDE.md` の「踏むと痛い箇所」に 1 項を足す (design D6): 症状 (シェルから起動したシェルの起動が重い、dump が
       書き換わる)、原因 (dump の鍵の揺れの 3 つの元)、外さない 3 つの宣言、lock の更新で home-manager が上がったら生成された
       `~/.zshrc` の並び (`typeset -U`、`brew shellenv`、`compinit`) を見ること、確かめ方。既存の項と同じ文体で書き、
       `rg -n 'zcompdump' CLAUDE.md` が 1 項の中だけで当たることで確かめる
-- [ ] 1.6 `README.md` の「利用側が与えるもの」の表に 1 行を足す (design D6)。表の列が崩れていないことを描画で確かめる
-- [ ] 1.7 所有者の端末で `<家の構成のクローン>/scripts/check-core.sh ../dotfiles` が 0 で終わることを確かめる。当たったら
+- [x] 1.6 `README.md` の「利用側が与えるもの」の表に 1 行を足す (design D6)。表の列が崩れていないことを描画で確かめる
+- [x] 1.7 所有者の端末で `<家の構成のクローン>/scripts/check-core.sh ../dotfiles` が 0 で終わることを確かめる。当たったら
       語の一覧を変えず、文章を役割の名前で書き直す
 
 ## 2. 手引きを直す (1 コミット: `docs: 手引きの前提に補完の初期化の置き場所を足す (single-zsh-compinit)`)

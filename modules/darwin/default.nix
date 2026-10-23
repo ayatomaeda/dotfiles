@@ -54,6 +54,17 @@
     ClientAliveCountMax 4
   '';
 
+  # 補完の初期化 (compinit) は home-manager の ~/.zshrc の 1 回だけにする (single-zsh-compinit)。
+  # nix-darwin は既定で全ユーザー向けの /etc/zshrc でも compinit を呼ぶ。2 回の compinit は
+  # 別々の fpath (/etc/zshrc の時点では home-manager の typeset -U も Homebrew の補完もまだ無い) を
+  # 数えるので、個数が食い違うと dump (~/.zcompdump*) を起動のたびに作り直し合う。
+  # 残すのが home-manager 側なのは、fpath を組み立てた後、compdef を使う初期化 (fzf、zoxide) の前に
+  # home-manager 自身が並べ、nix-darwin の無い環境でも同じ ~/.zshrc で動くため。
+  # enable と enableCompletion は既定のまま (前者を切ると /etc/zshenv の Nix の環境ごと消え、
+  # 後者を切ると nix-zsh-completions も消える)。bashcompinit は compinit より前でも警告を出さない。
+  # 前提: home-manager を使わないアカウントの対話 zsh には、補完の初期化が無い。
+  programs.zsh.enableGlobalCompInit = false;
+
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
