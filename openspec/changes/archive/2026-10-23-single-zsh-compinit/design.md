@@ -111,13 +111,31 @@
   (ユーザーの数と home-manager の読み込み) と突き合わせた日にする。家の構成はこの change で変わらないので、apply の時点で
   突き合わせられる。
 
+実装の PR のレビューで、次の 3 つを足した (D4 の鍵を改め、2 つの assertion を置く)。
+
+- **D7. dump の鍵は zsh の実体と版にする (D4 を改める)。** 版だけでは、macOS の zsh と Nix の zsh の版がそろったときに
+  同じファイルを使い、zsh 同梱の関数のディレクトリが違うので個数が違って、また書き換え合う。実体は `$module_path[1]`
+  (zsh のモジュールの置き場所。`/usr/lib/zsh/5.9` と Nix の store の道) で見分け、Nix の store にあるものは `nix` に
+  まとめ、ほかは `/lib/zsh/` より前の道を `-` でつないだ名前にする (`.zcompdump-usr-5.9`、`.zcompdump-nix-5.9.2`)。
+  退けた案: store の道をそのまま鍵にする — 同じ版の zsh が作り直されるたびに dump のファイルが増える。fpath のハッシュを
+  鍵にする — zsh に組み込みのハッシュが無く、起動のたびに外部のコマンドを呼ぶ。
+- **D8. 並びを評価で検査する (Risks の「順序を変える」への対処を、文書から assertion に替える)。** core の `zsh.nix` が
+  home-manager の `assertions` で、生成される `~/.zshrc` (`programs.zsh.initContent`) の中の `typeset -U`、
+  `brew shellenv` (darwin のときだけ)、`compinit -d` の最初の行の位置がこの順であることを検査する。oh-my-zsh か prezto を
+  使う構成では home-manager が `compinit` を置かないので検査しない。CI は評価だけを行うので、home-manager が `mkOrder` の
+  番号を変えたら lock の更新の PR で止まる。負の試験 (`compinit` を 545 と 505 に置く) で止まることを確かめた。
+- **D9. home-manager の補完が切られていないことを検査する (Risks の「home-manager を使わないアカウント」の一部を守る)。**
+  core の darwin モジュールが、`home-manager.users` が空でないことと、各ユーザーの `programs.zsh.enable` と
+  `enableCompletion` が真であることを assertion で検査する。D1 で `/etc/zshrc` の `compinit` を止めたので、これが
+  崩れると補完と `compdef` が黙って消えるため。home-manager を使わない macOS のアカウントは構成から見えないので、
+  前提として文書に残す (D6) ままにする。負の試験 (どちらかを `mkForce false`) で止まることを確かめた。
+
 ## Risks / Trade-offs
 
 - [home-manager を使わないアカウント (別の macOS ユーザー) の対話 zsh で補完が初期化されない] → core の darwin
   モジュールは home-manager の読み込みをすでに前提にしている。前提として README と手引きに書く (D6)。
 - [home-manager が `compinit` の順序 (mkOrder 570) や fpath の組み立て (510-540) の順序を変える] → Homebrew の行
-  (550) が `compinit` の後か `typeset -U` の前に回る。どちらも評価では気づけないので、`CLAUDE.md` の項に、lock の更新で
-  home-manager が上がったときは生成された `~/.zshrc` の並びを見ることを書く。
+  (550) が `compinit` の後か `typeset -U` の前に回る。D8 の assertion が評価で止める。
 - [home-manager の `compinit` が消える] → core 自身が zoxide と fzf を有効にしているので、`compdef` のエラーで対話シェルに
   すぐ出る。
 - [nix-darwin が `enableGlobalCompInit` を改名・廃止する] → 評価が止まるので CI と lock の更新で気づく。

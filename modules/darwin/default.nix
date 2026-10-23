@@ -4,7 +4,7 @@
 #
 # **home-manager の darwin モジュールを利用側が読み込んでいることを前提にする。**
 # 下で home-manager.* を設定するため。
-{ ... }:
+{ config, lib, ... }:
 {
   imports = [
     ./homebrew.nix
@@ -53,6 +53,46 @@
     ClientAliveInterval 15
     ClientAliveCountMax 4
   '';
+
+  # 補完の初期化 (compinit) は home-manager の ~/.zshrc の 1 回だけにする (single-zsh-compinit)。
+  # nix-darwin は既定で全ユーザー向けの /etc/zshrc でも compinit を呼ぶ。2 回の compinit は
+  # 別々の fpath (/etc/zshrc の時点では home-manager の typeset -U も Homebrew の補完もまだ無い) を
+  # 数えるので、個数が食い違うと dump (~/.zcompdump*) を起動のたびに作り直し合う。
+  # 残すのが home-manager 側なのは、fpath を組み立てた後、compdef を使う初期化 (fzf、zoxide) の前に
+  # home-manager 自身が並べ、nix-darwin の無い環境でも同じ ~/.zshrc で動くため。
+  # enable と enableCompletion は既定のまま (前者を切ると /etc/zshenv の Nix の環境ごと消え、
+  # 後者を切ると nix-zsh-completions も消える)。bashcompinit は compinit より前でも警告を出さない。
+  # 前提: home-manager を使わないアカウントの対話 zsh には、補完の初期化が無い。
+  programs.zsh.enableGlobalCompInit = false;
+
+  # 上で /etc/zshrc の compinit を止めたので、home-manager の zsh の補完が切られると、どこにも
+  # compinit が無くなり、補完と compdef を使う初期化 (fzf、zoxide) が黙って失われる。
+  # home-manager のユーザーについては評価で止める。home-manager を使わない macOS のアカウントは
+  # 構成から見えないので、ここでは守れない (README の「利用側が与えるもの」)。
+  assertions =
+    let
+      hmUsers = config.home-manager.users;
+      lacking = lib.filterAttrs (_: u: !(u.programs.zsh.enable && u.programs.zsh.enableCompletion)) hmUsers;
+    in
+    [
+      {
+        assertion = hmUsers != { };
+        message = ''
+          dotfiles (single-zsh-compinit): home-manager.users が空。core は nix-darwin の
+          /etc/zshrc の compinit を止め、補完の初期化を home-manager の ~/.zshrc に任せている。
+          対話で使うユーザーを home-manager.users に宣言する。
+        '';
+      }
+      {
+        assertion = lacking == { };
+        message = ''
+          dotfiles (single-zsh-compinit): home-manager の programs.zsh.enable か enableCompletion が
+          false のユーザーがいる (${lib.concatStringsSep ", " (lib.attrNames lacking)})。core は
+          nix-darwin の /etc/zshrc の compinit を止めているので、このユーザーの対話 zsh には
+          補完の初期化が無くなる。
+        '';
+      }
+    ];
 
   home-manager = {
     useGlobalPkgs = true;

@@ -110,6 +110,7 @@ core のモジュールが正しく動くために、利用側の宣言に頼っ
 | Ghostty の設定 (`package = null`、`font-family`) | Ghostty 本体と 2 つのフォント。core の Homebrew のリストにあるが、効くのは `homebrew.enable = true` のときだけ |
 | 1Password の SSH agent と `op-ssh-sign` | 1Password のアプリ (同上) と、その SSH agent の有効化 |
 | 署名鍵を項目名で選ぶ (`dotfiles.git.signingKeyName`) | 署名する Mac と、ssh の接続元のどれの 1Password にも、その名前の SSH Key の項目が**ちょうど 1 つ**あり、SSH agent がその鍵を出していること |
+| 対話 zsh の補完の初期化 (`compinit`) は home-manager の `~/.zshrc` の 1 回だけ。`darwinModules.default` が nix-darwin の全ユーザー向けの `compinit` を止める | home-manager の darwin モジュールの読み込み (1 行目と同じ)。**home-manager を使わないアカウントの対話 zsh には、補完の初期化が無い** |
 | `ssh/rc` は、生きているリンクの先が所有者の端末の agent であることを前提に張り替える | **agent を転送する先は、所有者の端末に限る** (`programs.ssh.settings.<host>.ForwardAgent`)。core は転送を有効にしない |
 
 ### リストに置いたものは、すべての利用側に入る

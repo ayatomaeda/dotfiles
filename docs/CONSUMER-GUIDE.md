@@ -1,6 +1,6 @@
 # 利用側の構成の手引き
 
-最終照合: 2026-10-19
+最終照合: 2026-10-23
 
 この文書は、core (このリポジトリ) を flake の input にする**利用側のリポジトリ**の作り方と運用を、所有者の家の
 構成 (private) を情報源にして書いたもの。各節は、家で採っている形、その理由 (退けた案や実測で踏んだ失敗)、
@@ -27,7 +27,10 @@ private なので読めない。
 
   ほかのフラグ (`--extra-conf` など) を付けると `nix.conf` の中身が変わり、nix-darwin が既知のものと認めず
   switch が止まる。Nix の設定と daemon は nix-darwin が管理する ([`README.md` の「利用側が与えるもの」](../README.md#利用側が与えるもの))。
-- nix-darwin + home-manager。home-manager は nix-darwin のモジュールとして読む。
+- nix-darwin + home-manager。home-manager は nix-darwin のモジュールとして読む。家の Mac は対話で使うユーザーが
+  1 人で、そのユーザーに home-manager を宣言している。core は対話 zsh の補完の初期化を home-manager の `~/.zshrc`
+  だけに任せるので、home-manager を使わないアカウントの対話 zsh には補完の初期化が無い
+  ([`README.md` の「利用側が与えるもの」](../README.md#利用側が与えるもの))。家にはそれで困るアカウントが無い。
 - 1Password の SSH agent が ssh の認証と git の署名の鍵を持つ。
 - Homebrew が `/opt/homebrew` にある (cask と App Store アプリの導入に使う)。
 

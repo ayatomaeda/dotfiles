@@ -210,6 +210,26 @@ dry-run、評価) までを担当する。このリポジトリの変更は、�
   - 端末のアプリの新しいウィンドウは launchd から起動するので入る。
   「switch したのに変数が空」と言われたら、まず `echo $__HM_SESS_VARS_SOURCED` を見る。
 
+- **補完の dump は「zsh の版」と「fpath の個数」を鍵にした cache — 鍵が起動の仕方で揺れると、起動のたびに作り直す**
+  (`single-zsh-compinit`) — `compinit` は dump (`~/.zcompdump-<実体>-<版>`) の 1 行目のファイルの個数と zsh の版が今の
+  シェルと違えば作り直す (1 回 0.5 秒ほど)。かつてはシェルから起動したシェル (herdr / tmux のペイン、エージェントの
+  シェル) が 1 秒以上かかっていた。揺れの元は 3 つで、それぞれ次の宣言で止めている。外さない。
+  - **2 回の `compinit`** — nix-darwin の `/etc/zshrc` と home-manager の `~/.zshrc` が別々の fpath を数えていた。
+    `modules/darwin/default.nix` の `enableGlobalCompInit = false` で home-manager の 1 回にしている。home-manager 側を
+    止める形にしない (nix-darwin の無い環境で `compdef` が無くなり、fzf と zoxide の初期化が落ちる)。
+  - **Homebrew の補完の位置** — `brew shellenv` が `compinit` の後にあると、端末のアプリが起動したシェルの dump には
+    Homebrew の補完が入らず、子のシェル (export された `FPATH` で受け継ぐ) の dump には入る。`zsh.nix` の
+    `mkOrder 550` で、home-manager の `typeset -U` の後、`compinit` の前に置いている。`FPATH` の export は Homebrew が
+    子のシェルに補完を届けるために足したもので、外さない (外しても dump は変わらなかった)。
+  - **2 つの zsh** — 対話シェルは macOS の `/bin/zsh`、`PATH` の `zsh` は Nix の zsh で、1 つの dump を書き換え合って
+    いた。`zsh.nix` の `completionInit` で dump を zsh の実体と版ごとのファイルにしている (`usr-5.9`、`nix-5.9.2`)。
+    版だけを鍵にしない — 2 つの版がそろっても、zsh 同梱の関数のディレクトリが違うので個数が違う。実体は
+    `$module_path` で見分け、Nix の store の道は `nix` にまとめる (store の道を鍵にするとファイルが増え続ける)。
+  並び (`typeset -U`、`brew shellenv`、`compinit`) は home-manager の `mkOrder` の番号に依るので、`zsh.nix` の assertion が
+  生成される `~/.zshrc` を評価で検査する。nix-darwin の側は、home-manager のユーザーの zsh の補完が切られていないことを
+  `modules/darwin/default.nix` の assertion で検査する。どちらかに当たったら、assertion を外さず、順序か宣言を直す。
+  確かめ方: シェルから `zsh -ic exit` と `/bin/zsh -ic exit` を交互に起動し、`ls -l ~/.zcompdump-*` の時刻が変わらないこと。
+
 - **`core.pager` / `pager.<コマンド>` と `diff.external` は TTY の扱いが違う** — 前者は
   出力が TTY でないとき git が自動的にページャを無効化するが、**後者は TTY と無関係に起動する**。
   そのため `delta` を pager に置いてもエージェントの `git diff` は素の unified diff のままだが、
