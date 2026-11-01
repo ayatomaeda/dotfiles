@@ -25,7 +25,7 @@ flake の input として取り込み、ホストの構成と環境固有の値 
 | `ssh/rc` | 宣言が読むスクリプトの本体。store へコピーされるので、編集は switch で反映 |
 | `docs/GUIDE.md` | 使えるようになっているキー・コマンドの早見表と、設定を変えるときに書く場所 |
 | `docs/CONSUMER-GUIDE.md` | 利用側のリポジトリの作り方と運用の手引き。所有者の家の構成を情報源にし、冒頭の `最終照合:` はそれと突き合わせた日 |
-| `openspec/specs/` | 要件 |
+| `openspec-store/openspec/specs/dotfiles/` | 要件 |
 | `.github/workflows/` | CI (例の構成の評価) と `flake.lock` の週次自動更新 |
 
 ## 使い方

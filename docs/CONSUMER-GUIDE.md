@@ -6,7 +6,7 @@
 構成 (private) を情報源にして書いたもの。各節は、家で採っている形、その理由 (退けた案や実測で踏んだ失敗)、
 それが成り立つ前提の順に並ぶ。読み手の環境でどう合わせるかは書いていない。前提が読み手の環境で成り立つかは
 読み手が判断する。core の仕組みそのものの説明は [`README.md`](../README.md)、[`CLAUDE.md`](../CLAUDE.md)、
-[`docs/GUIDE.md`](GUIDE.md)、[`openspec/specs/`](../openspec/specs/) にあり、ここではリンクで指す。
+[`docs/GUIDE.md`](GUIDE.md)、[`openspec-store/openspec/specs/dotfiles/`](../openspec/specs/) にあり、ここではリンクで指す。
 
 冒頭の `最終照合:` の日付は、この文書を家の構成と突き合わせて確かめた日 (編集した日ではない)。これより後の
 家の変更はこの文書に入っていないことがある。照合は家の側の仕組みが行い、直すときは core の change として直す。
