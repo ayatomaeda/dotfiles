@@ -26,6 +26,7 @@
       "font-source-han-code-jp"
       "ghostty"
       "google-chrome"
+      "httpie-desktop"
       "obsidian"
       "visual-studio-code"
     ];
