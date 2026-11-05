@@ -14,5 +14,6 @@
     ghq
     uv
     argocd
+    httpie
   ];
 }
