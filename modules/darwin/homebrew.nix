@@ -10,9 +10,12 @@
 {
   homebrew = {
     # Homebrew でしか導入できない formula。
-    #   mas : masApps の導入に必要
+    #   mas                  : masApps の導入に必要
+    #   leaf-markdown-viewer : ターミナルの Markdown ビューア (コマンドは leaf)。
+    #                          nixpkgs に無いため。nixpkgs に入ったら home.packages へ移す
     brews = [
       "mas"
+      "leaf-markdown-viewer"
     ];
 
     # ghostty と 2 つのフォントは modules/common/ghostty.nix が前提にしている
