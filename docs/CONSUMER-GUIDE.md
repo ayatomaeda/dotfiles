@@ -1,6 +1,6 @@
 # 利用側の構成の手引き
 
-最終照合: 2026-10-23
+最終照合: 2026-11-12
 
 この文書は、core (このリポジトリ) を flake の input にする**利用側のリポジトリ**の作り方と運用を、所有者の家の
 構成 (private) を情報源にして書いたもの。各節は、家で採っている形、その理由 (退けた案や実測で踏んだ失敗)、
@@ -300,7 +300,9 @@ CI は対象を宣言から取り出す (`builtins.attrNames`) ので、ホス�
 ```
 
 非公式 tap の `trusted` の理由は [`CLAUDE.md` の「踏むと痛い箇所」](../CLAUDE.md#踏むと痛い箇所)。
-`brews` は core の `mas` だけで、利用側は足していない。CLI は Nix で入れる。
+`brews` は core が持つものだけで、利用側は足していない。core の `brews` は Homebrew でしか導入できない formula
+(`mas` と、nixpkgs に無いもの) に限り、中身は [`modules/darwin/homebrew.nix`](../modules/darwin/homebrew.nix) を正とする。
+CLI は Nix で入れる。
 
 **`autoUpdate = true`** — switch のたびに Homebrew 本体とメタデータを更新する。`false` にしていた時期に本体が
 約 2 か月遅れ、cask 定義が使う新しい DSL を解釈できなくなり、switch が `brew bundle` で失敗した。cask 定義は
